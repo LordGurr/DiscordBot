@@ -894,6 +894,9 @@ namespace DiscordBot
 
             private async Task WriteLine(string str)
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine(str);
+                Console.ForegroundColor = ConsoleColor.White;
                 SendString += "\n" + str;
             }
 
@@ -1545,6 +1548,51 @@ namespace DiscordBot
                 await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
                 await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
                 await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now.").ConfigureAwait(false);
+                GiveBotCoin(ctx);
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("image2string")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
+            public async Task Image2string(CommandContext ctx)
+            {
+                Image image = Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
+
+                FrameDimension dimension = new FrameDimension(image.FrameDimensionsList[0]);
+
+                int frameCount = image.GetFrameCount(dimension);
+
+                int left = Console.WindowLeft, top = Console.WindowTop;
+
+                //char[] chars = { '#', '#', '@', '%', '=', '+', 'º', ':', '-', '.' };
+                string[] chars = { "█", "▓", "▒", "░", "   " };
+                string empty = "‌‌ ";
+                image.SelectActiveFrame(dimension, 0);
+                for (int h = 0; h < image.Height; h++)
+                {
+                    string temp = ".";
+                    for (int w = 0; w < image.Width; w++)
+                    {
+                        Color cl = ((Bitmap)image).GetPixel(w, h);
+                        int gray = (cl.R + cl.G + cl.B) / 3;
+                        int index = (gray * (chars.Length - 1)) / 255;
+                        if (cl.Name == "0")
+                        {
+                            index = chars.Length - 1;
+                        }
+                        //if (index >= chars.Length)
+                        //{
+                        //    temp += string.Empty + (empty) + (empty);
+                        //}
+                        //else if (chars[index] == ".")
+                        //{
+                        //    temp += string.Empty + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]);
+                        //}
+                        temp += string.Empty + (chars[index]);
+                    }
+
+                    await WriteLine(temp);
+                }
+                await ctx.Channel.SendMessageAsync(SendString).ConfigureAwait(false);
                 GiveBotCoin(ctx);
             }
 
