@@ -222,7 +222,7 @@ ClientBin/
 *.jfm
 *.pfx
 *.publishsettings
-* config.json
+*.json
 *.txt
 orleans.codegen.cs
 

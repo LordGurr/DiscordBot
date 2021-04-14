@@ -1608,7 +1608,7 @@ namespace DiscordBot
                 }
                 if (membersNotAbleToModify > 0)
                 {
-                    await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false); //change
+                    await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false);
                 }
                 else
                 {
