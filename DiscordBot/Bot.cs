@@ -18,6 +18,7 @@ using System.ComponentModel;
 using System.Windows;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Net;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -1238,7 +1239,10 @@ namespace DiscordBot
 
                 // retrieve the command and its arguments from the given string
                 var cmd = cmds.FindCommand(command, out var customArgs);
-
+                //for (int i = 1; i < command.Length; i++)
+                //{
+                //    customArgs += command[i] + " ";
+                //}
                 // create a fake CommandContext
                 var fakeContext = cmds.CreateFakeContext(member, ctx.Channel, command, ctx.Prefix, cmd, customArgs);
 
@@ -1551,49 +1555,89 @@ namespace DiscordBot
                 GiveBotCoin(ctx);
             }
 
+            public void SaveImage(string filename, System.Drawing.Imaging.ImageFormat format, string imageUrl)
+            {
+                WebClient client = new WebClient();
+                Stream stream = client.OpenRead(imageUrl);
+                Bitmap bitmap; bitmap = new Bitmap(stream);
+
+                if (bitmap != null)
+                {
+                    bitmap.Save(filename, format);
+                }
+
+                stream.Flush();
+                stream.Close();
+                client.Dispose();
+            }
+
             [DSharpPlus.CommandsNext.Attributes.Command("image2string")]
             [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
             public async Task Image2string(CommandContext ctx)
             {
+                //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
+                //attachments.FindAll(x => x.GetType() == typeof(".png"))
+                SendString = "";
                 Image image = Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
-
-                FrameDimension dimension = new FrameDimension(image.FrameDimensionsList[0]);
-
-                int frameCount = image.GetFrameCount(dimension);
-
-                int left = Console.WindowLeft, top = Console.WindowTop;
-
-                //char[] chars = { '#', '#', '@', '%', '=', '+', 'º', ':', '-', '.' };
-                string[] chars = { "█", "▓", "▒", "░", "   " };
-                string empty = "‌‌ ";
-                image.SelectActiveFrame(dimension, 0);
-                for (int h = 0; h < image.Height; h++)
+                try
                 {
-                    string temp = ".";
-                    for (int w = 0; w < image.Width; w++)
+                    if (ctx.Message.Attachments[0].Width != null)
                     {
-                        Color cl = ((Bitmap)image).GetPixel(w, h);
-                        int gray = (cl.R + cl.G + cl.B) / 3;
-                        int index = (gray * (chars.Length - 1)) / 255;
-                        if (cl.Name == "0")
+                        string url = ctx.Message.Attachments.FirstOrDefault().Url;
+                        SaveImage("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, url);
+                        image = Image.FromFile("screenshotTemp.png");
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+                try
+                {
+                    FrameDimension dimension = new FrameDimension(image.FrameDimensionsList[0]);
+
+                    int frameCount = image.GetFrameCount(dimension);
+
+                    int left = Console.WindowLeft, top = Console.WindowTop;
+
+                    //char[] chars = { '#', '#', '@', '%', '=', '+', 'º', ':', '-', '.' };
+                    string[] chars = { "█", "▓", "▒", "░" };// "   "
+                    string empty = "‌‌ ";
+                    image.SelectActiveFrame(dimension, 0);
+                    for (int h = 0; h < image.Height; h++)
+                    {
+                        string temp = "";
+                        for (int w = 0; w < image.Width; w++)
                         {
-                            index = chars.Length - 1;
+                            Color cl = ((Bitmap)image).GetPixel(w, h);
+                            int gray = (cl.R + cl.G + cl.B) / 3;
+                            int index = (gray * (chars.Length - 1)) / 255;
+                            if (cl.Name == "0")
+                            {
+                                index = chars.Length - 1;
+                            }
+                            //if (index >= chars.Length)
+                            //{
+                            //    temp += string.Empty + (empty) + (empty);
+                            //}
+                            //else if (chars[index] == ".")
+                            //{
+                            //    temp += string.Empty + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]);
+                            //}
+                            temp += string.Empty + (chars[index]) + (chars[index]);
                         }
-                        //if (index >= chars.Length)
-                        //{
-                        //    temp += string.Empty + (empty) + (empty);
-                        //}
-                        //else if (chars[index] == ".")
-                        //{
-                        //    temp += string.Empty + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]) + (chars[index]);
-                        //}
-                        temp += string.Empty + (chars[index]);
+
+                        await WriteLine(temp);
                     }
 
-                    await WriteLine(temp);
+                    await ctx.Channel.SendMessageAsync(SendString).ConfigureAwait(false);
+                    GiveBotCoin(ctx);
                 }
-                await ctx.Channel.SendMessageAsync(SendString).ConfigureAwait(false);
-                GiveBotCoin(ctx);
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+                SendString = "";
             }
 
             //[DSharpPlus.CommandsNext.Attributes.Command("inspiroquote")]
