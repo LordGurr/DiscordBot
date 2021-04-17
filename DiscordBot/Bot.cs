@@ -20,6 +20,10 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.Net;
 
+using System.Runtime.InteropServices;
+
+using HWND = System.IntPtr;
+
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
 
@@ -236,12 +240,13 @@ namespace DiscordBot
             }
         }
 
-        private async Task TakeScreenshotAndUploadApplication(CommandContext ctx)
+        private async Task TakeScreenshotAndUploadApplication(CommandContext ctx, HWND handle)
         {
             ScreenShootingShit screenShit = new ScreenShootingShit();
-            ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
+            //ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
             ScreenCapture screenCapture = new ScreenCapture();
-            Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
+            //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
+            Image img = screenCapture.CaptureWindow(handle);
             screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
             await UploadFile("screenshotTemp.png");
 
@@ -1053,7 +1058,7 @@ namespace DiscordBot
             public async Task SaveAllbotcoin(CommandContext ctx)
             {
                 await bot.SaveBotCoin();
-                await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.");
+                await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.", ctx);
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("upload")]
@@ -1083,12 +1088,66 @@ namespace DiscordBot
                 await bot.TakeScreenshotAndUpload(ctx);
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("application")]
+            [DSharpPlus.CommandsNext.Attributes.Command("app")]
             [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task ScreenshotApp(CommandContext ctx)
             {
-                await bot.TakeScreenshotAndUploadApplication(ctx);
+                try
+                {
+                    await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("getapps")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task GetApp(CommandContext ctx)
+            {
+                SendString = string.Empty;
+                foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
+                {
+                    IntPtr handle = window.Key;
+
+                    string title = window.Value;
+
+                    await WriteLine(title + ", (" + handle + ")");
+                }
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Applications info",
+                    Description = SendString,
+                });
+                SendString = string.Empty;
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("appsscreenshots")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("appsskärmbilder", "appsskärmdumpar")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task GetAppScreen(CommandContext ctx)
+            {
+                SendString = string.Empty;
+                foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
+                {
+                    IntPtr handle = window.Key;
+
+                    string title = window.Value;
+
+                    await CommandWriteLine(title + ", (" + handle + ")", ctx);
+                    try
+                    {
+                        await bot.TakeScreenshotAndUploadApplication(ctx, handle);
+                    }
+                    catch (Exception e)
+                    {
+                        await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                    }
+                }
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("commandline")]
@@ -1203,7 +1262,7 @@ namespace DiscordBot
                     bot.restart = false;
                     bot.shutdown = true;
                     TimeSpan temp = DateTime.Now - bot.lastSave;
-                    await WriteLine("Stänger ner inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nKommer inte att starta igen.", ctx);
+                    await CommandWriteLine("Stänger ner inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nKommer inte att starta igen.", ctx);
                     shutdownTime = DateTime.Now.AddMinutes(bot.sparTid.TotalMinutes - temp.TotalMinutes);
                     await Activity(ctx, 2, "Shutdown " + shutdownTime.ToShortTimeString());
                     //await TakeScreenshotAndUpload(e);
@@ -1581,7 +1640,7 @@ namespace DiscordBot
                 Image image = Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
                 try
                 {
-                    if (ctx.Message.Attachments[0].Width != null)
+                    if (ctx.Message.Attachments.Count > 0)
                     {
                         string url = ctx.Message.Attachments.FirstOrDefault().Url;
                         SaveImage("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, url);
@@ -1591,6 +1650,7 @@ namespace DiscordBot
                 catch (Exception e)
                 {
                     await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                    return;
                 }
                 try
                 {
@@ -1692,9 +1752,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Försökte ändra smeknamn: " + e.Message);
-                        Console.ForegroundColor = ConsoleColor.White;
+                        WriteLine("Försökte ändra smeknamn: " + e.Message, ctx);
                         membersNotAbleToModify++;
                     }
                 }
@@ -2699,6 +2757,52 @@ namespace DiscordBot
             {
                 return GetDisplays().Count;
             }
+        }
+
+        /// <summary>Contains functionality to get all the open windows.</summary>
+        public static class OpenWindowGetter
+        {
+            /// <summary>Returns a dictionary that contains the handle and title of all the open windows.</summary>
+            /// <returns>A dictionary that contains the handle and title of all the open windows.</returns>
+            public static IDictionary<HWND, string> GetOpenWindows()
+            {
+                HWND shellWindow = GetShellWindow();
+                Dictionary<HWND, string> windows = new Dictionary<HWND, string>();
+
+                EnumWindows(delegate (HWND hWnd, int lParam)
+                {
+                    if (hWnd == shellWindow) return true;
+                    if (!IsWindowVisible(hWnd)) return true;
+
+                    int length = GetWindowTextLength(hWnd);
+                    if (length == 0) return true;
+
+                    StringBuilder builder = new StringBuilder(length);
+                    GetWindowText(hWnd, builder, length + 1);
+
+                    windows[hWnd] = builder.ToString();
+                    return true;
+                }, 0);
+
+                return windows;
+            }
+
+            private delegate bool EnumWindowsProc(HWND hWnd, int lParam);
+
+            [DllImport("USER32.DLL")]
+            private static extern bool EnumWindows(EnumWindowsProc enumFunc, int lParam);
+
+            [DllImport("USER32.DLL")]
+            private static extern int GetWindowText(HWND hWnd, StringBuilder lpString, int nMaxCount);
+
+            [DllImport("USER32.DLL")]
+            private static extern int GetWindowTextLength(HWND hWnd);
+
+            [DllImport("USER32.DLL")]
+            private static extern bool IsWindowVisible(HWND hWnd);
+
+            [DllImport("USER32.DLL")]
+            private static extern IntPtr GetShellWindow();
         }
     }
 }
