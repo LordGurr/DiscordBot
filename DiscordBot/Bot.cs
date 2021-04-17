@@ -80,7 +80,7 @@ namespace DiscordBot
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(str);
             Console.ForegroundColor = ConsoleColor.White;
-            await commandLine.SendMessageAsync(str);
+            await commandLine.SendMessageAsync(str).ConfigureAwait(false);
             if (e != commandLine)
             {
                 await e.SendMessageAsync(str).ConfigureAwait(false);
@@ -248,9 +248,29 @@ namespace DiscordBot
             //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
             Image img = screenCapture.CaptureWindow(handle);
             screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
-            await UploadFile("screenshotTemp.png");
+            //await UploadFile("screenshotTemp.png");
 
-            if (ctx == null)
+            if (ctx == null || ctx.Channel.Id == commandLine.Id)
+            {
+                await UploadFile("screenshotTemp.png");
+            }
+            else if (ctx.Channel.Id != commandLine.Id)
+            {
+                await UploadFile("screenshotTemp.png", ctx.Channel);
+            }
+        }
+
+        private async Task TakeScreenshotAndUploadApplication(MessageCreateEventArgs ctx, HWND handle)
+        {
+            ScreenShootingShit screenShit = new ScreenShootingShit();
+            //ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
+            ScreenCapture screenCapture = new ScreenCapture();
+            //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
+            Image img = screenCapture.CaptureWindow(handle);
+            screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
+            //await UploadFile("screenshotTemp.png");
+
+            if (ctx == null || ctx.Channel.Id == commandLine.Id)
             {
                 await UploadFile("screenshotTemp.png");
             }
@@ -529,7 +549,15 @@ namespace DiscordBot
                 await Task.Delay(500);
                 MessageCreateEventArgs message;
                 message = null;
-                await TakeScreenshotAndUpload(message);
+                try
+                {
+                    await TakeScreenshotAndUploadApplication(message, Process.GetCurrentProcess().MainWindowHandle);
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                    await TakeScreenshotAndUpload(message);
+                }
                 //ScreenCapture screenCapture = new ScreenCapture();
                 //Image img = screenCapture.CaptureScreen();
                 //screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
@@ -931,7 +959,7 @@ namespace DiscordBot
                 }
                 if (bot.commandLine != ctx.Channel)
                 {
-                    await bot.commandLine.SendMessageAsync(str);
+                    await bot.commandLine.SendMessageAsync(str).ConfigureAwait(false);
                 }
             }
 
@@ -1153,11 +1181,23 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.Command("commandline")]
             [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-            public async Task ExecCommand(CommandContext ctx, string strCmdLine)
+            public async Task ExecCommand(CommandContext ctx, [RemainingText] string strCmdLine)
             {
-                strCmdLine = "/C C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe " + "--load-extension=\"C:\\Program Files (x86)\\Google\\Chrome\\Application\\toolbar-GC\"";
+                // Start the child process.
+                Process p = new Process();
+                // Redirect the output stream of the child process.
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.Arguments = strCmdLine;
+                p.Start();
 
-                System.Diagnostics.Process.Start("cmd.exe", strCmdLine);
+                // Do not wait for the child process to exit before
+                // reading to the end of its redirected stream.
+                // p.WaitForExit();
+                // Read the output stream first and then wait.
+                string output = p.StandardOutput.ReadToEnd();
+                await ctx.Channel.SendMessageAsync(output).ConfigureAwait(false);
+                p.WaitForExit();
                 await bot.TakeScreenshotAndUpload(ctx);
             }
 
