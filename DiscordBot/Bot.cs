@@ -193,19 +193,19 @@ namespace DiscordBot
             {
                 ScreenCapture screenCapture = new ScreenCapture();
                 Image img = screenCapture.CaptureScreen();
-                screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
+                screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
 
                 if (ctx == null)
                 {
-                    await UploadFile("screenshotTemp.png");
+                    await UploadFile(tempImage);
                 }
                 else if (ctx.Channel.Id != commandLine.Id)
                 {
-                    await UploadFile("screenshotTemp.png", ctx.Channel);
+                    await UploadFile(tempImage, ctx.Channel);
                 }
                 else
                 {
-                    await UploadFile("screenshotTemp.png");
+                    await UploadFile(tempImage);
                 }
             }
             catch (Exception e)
@@ -221,19 +221,19 @@ namespace DiscordBot
                 //await UploadFile("screenshotTemp.png");
                 ScreenCapture screenCapture = new ScreenCapture();
                 Image img = screenCapture.CaptureScreen();
-                screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
+                screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
 
                 if (ctx == null)
                 {
-                    await UploadFile("screenshotTemp.png");
+                    await UploadFile(tempImage);
                 }
                 else if (ctx.Channel.Id != commandLine.Id)
                 {
-                    await UploadFile("screenshotTemp.png", ctx.Channel);
+                    await UploadFile(tempImage, ctx.Channel);
                 }
                 else
                 {
-                    await UploadFile("screenshotTemp.png");
+                    await UploadFile(tempImage);
                 }
             }
             catch (Exception e)
@@ -249,16 +249,16 @@ namespace DiscordBot
             ScreenCapture screenCapture = new ScreenCapture();
             //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
             Image img = screenCapture.CaptureWindow(handle);
-            screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
+            screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
 
             if (ctx == null || ctx.Channel.Id == commandLine.Id)
             {
-                await UploadFile("screenshotTemp.png");
+                await UploadFile(tempImage);
             }
             else if (ctx.Channel.Id != commandLine.Id)
             {
-                await UploadFile("screenshotTemp.png", ctx.Channel);
+                await UploadFile(tempImage, ctx.Channel);
             }
         }
 
@@ -269,16 +269,16 @@ namespace DiscordBot
             ScreenCapture screenCapture = new ScreenCapture();
             //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
             Image img = screenCapture.CaptureWindow(handle);
-            screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
+            screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
 
             if (ctx == null || ctx.Channel.Id == commandLine.Id)
             {
-                await UploadFile("screenshotTemp.png");
+                await UploadFile(tempImage);
             }
             else if (ctx.Channel.Id != commandLine.Id)
             {
-                await UploadFile("screenshotTemp.png", ctx.Channel);
+                await UploadFile(tempImage, ctx.Channel);
             }
         }
 
@@ -613,7 +613,7 @@ namespace DiscordBot
             }
             MessageCreateEventArgs message;
             message = null;
-            await TakeScreenshotAndUpload(message);
+            await TakeScreenshotAndUploadApplication(message, Process.GetCurrentProcess().MainWindowHandle);
             await Client.DisconnectAsync();
             Client.Dispose();
         }
@@ -1090,7 +1090,10 @@ namespace DiscordBot
             public async Task SaveAllbotcoin(CommandContext ctx)
             {
                 await bot.SaveBotCoin();
-                await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.", ctx);
+                if (ctx.Channel.Id != bot.commandLine.Id)
+                {
+                    await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.", ctx);
+                }
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("upload")]
@@ -1170,7 +1173,7 @@ namespace DiscordBot
 
                     string title = window.Value;
 
-                    await CommandWriteLine(title + ", (" + handle + ")", ctx);
+                    await CommandWriteLine(title /*+ ", (" + handle + ")"*/, ctx);
                     try
                     {
                         await bot.TakeScreenshotAndUploadApplication(ctx, handle);
@@ -1182,28 +1185,36 @@ namespace DiscordBot
                 }
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("commandline")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
-            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-            public async Task ExecCommand(CommandContext ctx, [RemainingText] string strCmdLine)
-            {
-                // Start the child process.
-                Process p = new Process();
-                // Redirect the output stream of the child process.
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.Arguments = strCmdLine;
-                p.Start();
+            //[DSharpPlus.CommandsNext.Attributes.Command("commandline")]
+            //[DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            //[DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            //public async Task ExecCommand(CommandContext ctx, [RemainingText] string strCmdLine)
+            //{
+            //    // Start the child process.
+            //    try
+            //    {
+            //        Process p = new Process();
+            //        // Redirect the output stream of the child process.
+            //        p.StartInfo.UseShellExecute = false;
+            //        p.StartInfo.RedirectStandardOutput = true;
+            //        p.StartInfo.FileName = strCmdLine;
+            //        //p.StartInfo.Arguments = strCmdLine;
+            //        p.Start();
 
-                // Do not wait for the child process to exit before
-                // reading to the end of its redirected stream.
-                // p.WaitForExit();
-                // Read the output stream first and then wait.
-                string output = p.StandardOutput.ReadToEnd();
-                await ctx.Channel.SendMessageAsync(output).ConfigureAwait(false);
-                p.WaitForExit();
-                await bot.TakeScreenshotAndUpload(ctx);
-            }
+            //        // Do not wait for the child process to exit before
+            //        // reading to the end of its redirected stream.
+            //        // p.WaitForExit();
+            //        // Read the output stream first and then wait.
+            //        string output = p.StandardOutput.ReadToEnd();
+            //        await ctx.Channel.SendMessageAsync(output).ConfigureAwait(false);
+            //        p.WaitForExit();
+            //        await bot.TakeScreenshotAndUpload(ctx);
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+            //    }
+            //}
 
             [DSharpPlus.CommandsNext.Attributes.Command("fuck")]
             [DSharpPlus.CommandsNext.Attributes.Description("Tells people to fuck off.")]
@@ -1249,7 +1260,7 @@ namespace DiscordBot
                     //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
                     await CommandWriteLine("Stänger ner omdelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
                     await SaveAllbotcoin(ctx);
-                    await bot.TakeScreenshotAndUpload(ctx);
+                    await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                     await Client.DisconnectAsync();
                     Client.Dispose();
                     Environment.Exit(0);
@@ -1687,8 +1698,8 @@ namespace DiscordBot
                     if (ctx.Message.Attachments.Count > 0)
                     {
                         string url = ctx.Message.Attachments.FirstOrDefault().Url;
-                        SaveImage("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, url);
-                        image = Image.FromFile("screenshotTemp.png");
+                        SaveImage(tempImage, System.Drawing.Imaging.ImageFormat.Png, url);
+                        image = Image.FromFile(tempImage);
                     }
                 }
                 catch (Exception e)
