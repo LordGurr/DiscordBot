@@ -318,40 +318,6 @@ namespace DiscordBot
             lastSave = DateTime.Now;
             Client.MessageCreated += async (s, e) =>
            {
-               //if (e.Author.Id == 819588747997872128 || true)
-               //{
-               //    //if (  e.MentionedUsers.Count > 0)
-               //    //  {
-               //    //      for (int i = 0; i < e.MentionedUsers.Count; i++)
-               //    //      {
-               //    //          if (e.MentionedUsers[i].Hierarchy == int.MaxValue)
-               //    //          {
-               //    //              var h = e.MentionedUsers[i].CreateDmChannelAsync();
-               //    //              await h.Result.SendMessageAsync("Help me i begg");
-               //    //          }
-               //    //      }
-               //    //  }
-               //    DiscordMember[] members = e.Channel.Users.ToArray();
-               //    //new DiscordMember();
-               //    //var j = g.Result.Guild.Members.Count;
-               //    for (int i = 0; i < members.Length; i++)
-               //    {
-               //        if (members[i].Hierarchy == int.MaxValue)
-               //        {
-               //            var h = members[i].CreateDmChannelAsync();
-               //            await h.Result.SendMessageAsync("Help me i begg");
-               //        }
-               //    }
-               //}
-               //if (LatestMessageSpam(e))
-               //{
-               //    await e.Message.RespondAsync(e.Author.Username + " spammar!").ConfigureAwait(false);
-               //}
-               //WriteLatestMessage(e);
-               //if (e.Message.Content.ToLower().StartsWith("ping"))
-               //    await e.Message.RespondAsync("pong!").ConfigureAwait(false);
-               //else if (e.Message.Content.ToLower().StartsWith("?help"))
-               //    await e.Message.RespondAsync("I will control your life. Ya shit...").ConfigureAwait(false);
                if (e.Message.Content.ToLower().Contains("kommunism") || e.Message.Content.ToLower().Contains("communism"))
                    await e.Message.RespondAsync("All hail the motherland!").ConfigureAwait(false);
                else if (e.Message.Content.ToLower().Contains("när är"))
@@ -366,148 +332,6 @@ namespace DiscordBot
                }
                else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!"))
                    await e.Message.RespondAsync("Hej " + e.Author.Username + "...").ConfigureAwait(false);
-               else if (e.Message.Content.ToLower().StartsWith("?fuck") && e.Author.Username == "Lordgurr")
-               {
-                   /*string temp;
-                   if (e.MentionedUsers.Count > 0)
-                   {
-                       temp = "";
-                       for (int i = 0; i < e.MentionedUsers.Count; i++)
-                       {
-                           temp += e.MentionedUsers[i].Mention;
-                           if (i + 2 == e.MentionedUsers.Count && e.MentionedUsers.Count > 1)
-                           {
-                               temp += " and ";
-                           }
-                           else if (e.MentionedUsers.Count > 1)
-                           {
-                               temp += ", ";
-                           }
-                       }
-                   }
-                   else
-                   {
-                       temp = e.Message.Content.ToLower().Replace("?fuck ", "");
-                       temp = temp.ToLower().Replace("?fuck", "");
-                   }
-                   //await ctx.Channel.SendMessageAsync("Fuck " + ctx.User.Mention).ConfigureAwait(false);
-                   await e.Message.RespondAsync("Fuck you " + temp).ConfigureAwait(false);*/
-               }
-               /*  else if (e.Message.Content.ToLower().StartsWith("?savebotcoin") && e.Author.Username == "Lordgurr")
-                 {
-                     await SaveBotCoin();
-                     await e.Message.RespondAsync("Saved all " + botCoinSaves.Count + " botcoin users botcoins.").ConfigureAwait(false);
-                 }*/
-               /*   else if (e.Message.Content.ToLower().StartsWith("?system") && e.Author.Username == "Lordgurr")
-                  {
-                      await e.Message.RespondAsync("Heter: " + System.AppDomain.CurrentDomain.FriendlyName).ConfigureAwait(false);
-                      await e.Message.RespondAsync("På version: " + Client.VersionString).ConfigureAwait(false);
-                      await e.Message.RespondAsync("På Windows version: " + Environment.OSVersion).ConfigureAwait(false);
-                      await e.Message.RespondAsync("C# version: " + Environment.Version).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Dator namn: " + Environment.MachineName).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Användarnamn: " + Environment.UserName).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Dator organisation: " + Environment.UserDomainName).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Finns på: " + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Kommando rad: " + Environment.CommandLine).ConfigureAwait(false);
-                      await e.Message.RespondAsync("Antal processor kärnor: " + Environment.ProcessorCount).ConfigureAwait(false);
-                      await e.Message.RespondAsync(Environment.Is64BitOperatingSystem ? "64 bitars operativ system" : "32 eller färre bitars operativ system.").ConfigureAwait(false);
-                      await e.Message.RespondAsync(Environment.Is64BitProcess ? "64 bitars program" : "32 bitars program.").ConfigureAwait(false);
-                  }*/
-               else if (e.Message.Content.ToLower().Contains("?skärmdumpa") && e.Author.Username == "Lordgurr")
-               {
-                   /* Funkar faktiskt Ja det är sant    ScreenCapture screenCapture = new ScreenCapture();
-                   Image img = screenCapture.CaptureScreen();
-                   screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img); Funkar fram hit jodå så är det */
-
-                   //screenCapture.CaptureWindowToFile(screenCapture.FindWindow("", ""), "screenTempApplic.png", System.Drawing.Imaging.ImageFormat.Png);
-                   //int screenLeft = SystemInformation.VirtualScreen.Left;
-                   //int screenTop = SystemInformation.VirtualScreen.Top;
-                   //int screenWidth = SystemInformation.VirtualScreen.Width;
-                   //int screenHeight = SystemInformation.VirtualScreen.Height;
-
-                   //// Create a bitmap of the appropriate size to receive the screenshot.
-                   //using (Bitmap bmp = new Bitmap(screenWidth, screenHeight))
-                   //{
-                   //    // Draw the screenshot into our bitmap.
-                   //    using (Graphics g = Graphics.FromImage(bmp))
-                   //    {
-                   //        g.CopyFromScreen(screenLeft, screenTop, 0, 0, bmp.Size);
-                   //    }
-
-                   //    // Do something with the Bitmap here, like save it to a file:
-                   //    bmp.Save("testImage.png", System.Drawing.Imaging.ImageFormat.Png);
-                   //}
-
-                   //var bounds = new Rectangle();
-                   //bounds = Screen.AllScreens.Aggregate(bounds, (current, screen)
-                   //                           => Rectangle.Union(current, screen.Bounds));
-                   //ScreenShotHelper.TakeAndSave("screenshot.png", bounds, System.Drawing.Imaging.ImageFormat.Png);
-                   //ScreenCapture sc = new ScreenCapture();
-                   // capture entire screen, and save it to a file
-                   //Image img = sc.CaptureScreen();
-                   // display image in a Picture control named imageDisplay
-                   //this.imageDisplay.Image = img;
-                   // capture this window, and save it
-                   //sc.CaptureWindowToFile(this.Handle, "C:\\temp2.gif", ImageFormat.Gif);
-                   //screenCapture.CaptureWindowToFile()
-                   // ScreenShootingShit screenShit = new ScreenShootingShit();
-                   //screenShit.GetDisplays();
-
-                   /* Funkar här också jodå   await UploadImage("screenshotTemp.png");
-                      if (e.Channel.Id != commandLine.Id)
-                      {
-                          await UploadImage("screenshotTemp.png", e.Channel);
-                      }  */
-
-                   //await TakeScreenshotAndUpload(e);
-               }
-               else if (e.Message.Content.ToLower().Contains("?reboot") && e.Author.Username == "Lordgurr")
-               {
-                   /* if (!shutdown)
-                    {
-                        restart = true;
-                        shutdown = true;
-                        TimeSpan temp = DateTime.Now - lastSave;
-                        //await WriteLine("Startar om inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nReboot är satt till " + restart + ".", e);
-                        //await TakeScreenshotAndUpload(e);
-                    }
-                    else
-                    {
-                        await WriteLine("En avstängning är redan bestämd och restart är sätt till " + restart + ".", e);
-                    }*/
-               }
-               else if (e.Message.Content.ToLower().Contains("?safeshutdown") && e.Author.Username == "Lordgurr")
-               {
-                   /* if (!shutdown)
-                    {
-                        restart = false;
-                        shutdown = true;
-                        TimeSpan temp = DateTime.Now - lastSave;
-                        await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
-                        //await TakeScreenshotAndUpload(e);
-                    }
-                    else
-                    {
-                        await WriteLine("En avstängning är redan bestämd och restart är sätt till " + restart + ".", e);
-                    }*/
-               }
-               else if (e.Message.Content.ToLower().Contains("?shutdown") && e.Author.Username == "Lordgurr")
-               {
-                   /* if (!shutdown)
-                    {
-                        restart = false;
-                        shutdown = true;
-                        //TimeSpan temp = DateTime.Now - lastSave;
-                        //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
-                        await WriteLine("Stänger ner omdelbart.", e);
-                        await TakeScreenshotAndUpload(e);
-                        Environment.Exit(0);
-                    }
-                    else
-                    {
-                        await WriteLine("En avstängning är redan bestämd och restart är sätt till " + restart + ".", e);
-                    }*/
-               }
            };
             await Reload();
             async Task Reload()
@@ -560,21 +384,6 @@ namespace DiscordBot
                     await WriteLine(e.Message);
                     await TakeScreenshotAndUpload(message);
                 }
-                //ScreenCapture screenCapture = new ScreenCapture();
-                //Image img = screenCapture.CaptureScreen();
-                //screenCapture.CaptureScreenToFile("screenshotTemp.png", System.Drawing.Imaging.ImageFormat.Png, img);
-                //await UploadImage("screenshotTemp.png");
-                //string returnString = "";
-                //for (int i = 0; i < Utskrivet.Count; i++)
-                //{
-                //    returnString += Utskrivet[i] + "\n";
-                //}
-                //var g = Client.GetChannelAsync(827869624808374293);
-                //await g.Result.SendMessageAsync(returnString);
-                //var c = Client.GetChannelAsync(460713383017185292);
-                // Client.SendMessageAsync();
-                //await d.SendMessageAsync("Help");
-                //await c.se("blabla");
             }
 
             Client.Resumed += async (e, a) =>
@@ -1123,6 +932,24 @@ namespace DiscordBot
                 await bot.TakeScreenshotAndUpload(ctx);
             }
 
+            [DSharpPlus.CommandsNext.Attributes.Command("skärm")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("monitorbild", "monitorshot", "monitor")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task ScreenshotMonitor(CommandContext ctx, int index)
+            {
+                try
+                {
+                    ScreenShootingShit screenShit = new ScreenShootingShit();
+                    ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
+                    await bot.TakeScreenshotAndUploadApplication(ctx, displays[index - 1].hMonitor);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
+
             [DSharpPlus.CommandsNext.Attributes.Command("app")]
             [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -1150,7 +977,7 @@ namespace DiscordBot
 
                     string title = window.Value;
 
-                    await WriteLine(title + ", (" + handle + ")");
+                    await WriteLine(title/* + ", (" + handle + ")"*/);
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
@@ -1160,7 +987,7 @@ namespace DiscordBot
                 SendString = string.Empty;
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("appsscreenshots")]
+            [DSharpPlus.CommandsNext.Attributes.Command("appsscreenshot")]
             [DSharpPlus.CommandsNext.Attributes.Aliases("appsskärmbilder", "appsskärmdumpar")]
             [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -2801,6 +2628,7 @@ namespace DiscordBot
                             di.WorkArea = mi.WorkArea;
                             di.Availability = mi.Flags.ToString();
                             di.hMonitor = hMonitor;
+
                             col.Add(di);
                         }
                         return true;
