@@ -53,6 +53,8 @@ namespace DiscordBot
         private DateTime lastSave;
         private TimeSpan sparTid;
         public Stopwatch sw;
+
+        public const string tempImage = "screenshotTemp.png";
         //public VoiceNextExtension Voice { get; set; } //To play music
 
         private async Task WriteLine(string str)
@@ -1041,6 +1043,7 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task BotInfo(CommandContext ctx)
             {
+                SendString = string.Empty;
                 await WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
                 //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
                 //var a = Client.CurrentApplication.Team.Members.ToArray();
@@ -1070,7 +1073,8 @@ namespace DiscordBot
                 {
                     await WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
                 }
-
+                await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
+                await WriteLine("Github repository: https://github.com/LordGurr/DiscordBot");
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
