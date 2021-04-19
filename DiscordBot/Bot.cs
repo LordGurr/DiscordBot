@@ -957,6 +957,12 @@ namespace DiscordBot
             {
                 try
                 {
+                    // Move window to show as much as possible
+                    int x = Console.CursorLeft;
+                    int y = Console.CursorTop;
+                    Console.SetCursorPosition(0, 0);
+                    Console.SetCursorPosition(x, y);
+                    await Task.Delay(1);
                     await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                 }
                 catch (Exception e)
