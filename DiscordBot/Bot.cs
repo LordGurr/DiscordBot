@@ -15,13 +15,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
-using System.Windows;
-using Microsoft.Win32;
 using System.Diagnostics;
 using System.Net;
-
-using System.Runtime.InteropServices;
-
 using HWND = System.IntPtr;
 
 //using DSharpPlus.VoiceNext;
@@ -54,7 +49,7 @@ namespace DiscordBot
         private TimeSpan sparTid;
         public Stopwatch sw;
 
-        public const string tempImage = "screenshotTemp.png";
+        public const string tempImagePng = "screenshotTemp.png";
         //public VoiceNextExtension Voice { get; set; } //To play music
 
         private async Task WriteLine(string str)
@@ -193,19 +188,19 @@ namespace DiscordBot
             {
                 ScreenCapture screenCapture = new ScreenCapture();
                 Image img = screenCapture.CaptureScreen();
-                screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
+                screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
 
                 if (ctx == null)
                 {
-                    await UploadFile(tempImage);
+                    await UploadFile(tempImagePng);
                 }
                 else if (ctx.Channel.Id != commandLine.Id)
                 {
-                    await UploadFile(tempImage, ctx.Channel);
+                    await UploadFile(tempImagePng, ctx.Channel);
                 }
                 else
                 {
-                    await UploadFile(tempImage);
+                    await UploadFile(tempImagePng);
                 }
             }
             catch (Exception e)
@@ -221,19 +216,19 @@ namespace DiscordBot
                 //await UploadFile("screenshotTemp.png");
                 ScreenCapture screenCapture = new ScreenCapture();
                 Image img = screenCapture.CaptureScreen();
-                screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
+                screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
 
                 if (ctx == null)
                 {
-                    await UploadFile(tempImage);
+                    await UploadFile(tempImagePng);
                 }
                 else if (ctx.Channel.Id != commandLine.Id)
                 {
-                    await UploadFile(tempImage, ctx.Channel);
+                    await UploadFile(tempImagePng, ctx.Channel);
                 }
                 else
                 {
-                    await UploadFile(tempImage);
+                    await UploadFile(tempImagePng);
                 }
             }
             catch (Exception e)
@@ -249,16 +244,16 @@ namespace DiscordBot
             ScreenCapture screenCapture = new ScreenCapture();
             //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
             Image img = screenCapture.CaptureWindow(handle);
-            screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
+            screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
 
             if (ctx == null || ctx.Channel.Id == commandLine.Id)
             {
-                await UploadFile(tempImage);
+                await UploadFile(tempImagePng);
             }
             else if (ctx.Channel.Id != commandLine.Id)
             {
-                await UploadFile(tempImage, ctx.Channel);
+                await UploadFile(tempImagePng, ctx.Channel);
             }
         }
 
@@ -269,16 +264,16 @@ namespace DiscordBot
             ScreenCapture screenCapture = new ScreenCapture();
             //Image img = screenCapture.CaptureWindow(displays[1].hMonitor);
             Image img = screenCapture.CaptureWindow(handle);
-            screenCapture.CaptureScreenToFile(tempImage, System.Drawing.Imaging.ImageFormat.Png, img);
+            screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
 
             if (ctx == null || ctx.Channel.Id == commandLine.Id)
             {
-                await UploadFile(tempImage);
+                await UploadFile(tempImagePng);
             }
             else if (ctx.Channel.Id != commandLine.Id)
             {
-                await UploadFile(tempImage, ctx.Channel);
+                await UploadFile(tempImagePng, ctx.Channel);
             }
         }
 
@@ -961,8 +956,9 @@ namespace DiscordBot
                     int x = Console.CursorLeft;
                     int y = Console.CursorTop;
                     Console.SetCursorPosition(0, 0);
-                    Console.SetCursorPosition(x, y);
                     await Task.Delay(1);
+                    Console.SetCursorPosition(x, y);
+                    await Task.Delay(5);
                     await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                 }
                 catch (Exception e)
@@ -1531,8 +1527,8 @@ namespace DiscordBot
                     if (ctx.Message.Attachments.Count > 0)
                     {
                         string url = ctx.Message.Attachments.FirstOrDefault().Url;
-                        SaveImage(tempImage, System.Drawing.Imaging.ImageFormat.Png, url);
-                        image = Image.FromFile(tempImage);
+                        SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
+                        image = Image.FromFile(tempImagePng);
                     }
                 }
                 catch (Exception e)
@@ -1588,17 +1584,118 @@ namespace DiscordBot
                 SendString = "";
             }
 
-            //[DSharpPlus.CommandsNext.Attributes.Command("inspiroquote")]
-            //public async Task InspiroCitat(CommandContext ctx)
-            //{
-            //    using (System.Net.WebClient webClient = new System.Net.WebClient())
-            //    {
-            //        using (Stream stream = webClient.OpenRead("https://generated.inspirobot.me/a/yZedqEgwJn.jpg"))
-            //        {
-            //            Image newImage = Image.FromFile("SampImag.jpg");
-            //        }
-            //    }
-            //}
+            [DSharpPlus.CommandsNext.Attributes.Command("face")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("thispersondoesnotexist", "tpdne", "human")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
+            public async Task ThisPersonDoesNotExist(CommandContext ctx)
+            {
+                //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
+                //attachments.FindAll(x => x.GetType() == typeof(".png"))
+                SendString = "";
+                try
+                {
+                    //Image image;
+                    using (WebClient client = new WebClient())
+                    {
+                        SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, "https://thispersondoesnotexist.com/image");
+                        //image = Image.FromFile(tempImage);
+                    }
+
+                    await bot.UploadFile(tempImagePng, ctx.Channel);
+                    GiveBotCoin(ctx);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+                SendString = "";
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("inspirobot")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("inspiroquote", "inspiro")]
+            public async Task InspiroCitat(CommandContext ctx)
+            {
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
+                        string url = client.DownloadString("https://inspirobot.me/api?generate=true");
+                        SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
+                        await bot.UploadFile(tempImagePng, ctx.Channel);
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("code")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("repo", "func", "void")]
+            public async Task SendCode(CommandContext ctx, string commandName)
+            {
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
+                        string code = client.DownloadString("https://raw.githubusercontent.com/LordGurr/DiscordBot/master/DiscordBot/Bot.cs");
+                        //SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
+                        if (code.Contains("            [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]"))
+                        {
+                            int index = code.IndexOf("            [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]");
+                            int brackets = 1;
+                            int next = code.IndexOf("{", index) + 1;
+                            string temp = code.Substring(index, next - index);
+                            while (brackets > 0)
+                            {
+                                if (code.IndexOf("{", next) < code.IndexOf("}", next))
+                                {
+                                    next = code.IndexOf("{", next) + 1;
+                                    brackets++;
+                                }
+                                else
+                                {
+                                    next = code.IndexOf("}", next) + 1;
+                                    brackets--;
+                                }
+                                temp = code.Substring(index, next - index);
+                            }
+                            string sendCode = code.Substring(index, next - index);
+                            string original = sendCode;
+                            string[] linesToSend = sendCode.Split('\n', '\\');
+                            int spacesToRemove = 0;
+                            for (int i = 0; i < linesToSend[0].Length; i++)
+                            {
+                                if (linesToSend[0][i] == ' ')
+                                {
+                                    spacesToRemove++;
+                                }
+                            }
+                            sendCode = string.Empty;
+                            for (int i = 0; i < linesToSend.Length; i++)
+                            {
+                                linesToSend[i] = linesToSend[i].Remove(0, spacesToRemove);
+                                sendCode += linesToSend[i] + "\n";
+                            }
+
+                            sendCode = "```cs\n" + sendCode + "\n```";
+                            sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
+                            await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await ctx.Channel.SendMessageAsync(commandName + " doesn't seem to exist.").ConfigureAwait(false);
+                        }
+                        //await bot.UploadFile(tempImagePng, ctx.Channel);
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
 
             [DSharpPlus.CommandsNext.Attributes.Command("nickname")]
             [DSharpPlus.CommandsNext.Attributes.Description("Döper om alla på servern.")]
@@ -1640,7 +1737,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        WriteLine("Försökte ändra smeknamn: " + e.Message, ctx);
+                        await WriteLine("Försökte ändra smeknamn: " + e.Message, ctx);
                         membersNotAbleToModify++;
                     }
                 }
