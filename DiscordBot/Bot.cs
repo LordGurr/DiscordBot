@@ -18,6 +18,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
 using HWND = System.IntPtr;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -723,6 +726,20 @@ namespace DiscordBot
             _ => input.First().ToString().ToUpper() + input.Substring(1)
         };
 
+        public static List<int> AllIndexesOf(string str, string value)
+        {
+            if (String.IsNullOrEmpty(value))
+                throw new ArgumentException("the string to find may not be empty", "value");
+            List<int> indexes = new List<int>();
+            for (int index = 0; ; index += value.Length)
+            {
+                index = str.IndexOf(value, index);
+                if (index == -1)
+                    return indexes;
+                indexes.Add(index);
+            }
+        }
+
         public class AdventureCommands : BaseCommandModule
         {
             /* Owner Commands */
@@ -877,8 +894,59 @@ namespace DiscordBot
                 {
                     await WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
                 }
+                //var httpClient = new HttpClient();
+                //httpClient.DefaultRequestHeaders.UserAgent.Add(
+                //    new ProductInfoHeaderValue("MyApplication", "1"));
+                //var repo = "markheath/azure-deploy-manage-containers";
+                //var contentsUrl = $"https://api.github.com/repos/{repo}/contents";
+                //var contentsJson = await httpClient.GetStringAsync(contentsUrl);
+                //var contents = (JArray)JsonConvert.DeserializeObject(contentsJson);
+                //foreach (var file in contents)
+                //{
+                //    var fileType = (string)file["type"];
+                //    if (fileType == "dir")
+                //    {
+                //        var directoryContentsUrl = (string)file["url"];
+                //        // use this URL to list the contents of the folder
+                //        Console.WriteLine($"DIR: {directoryContentsUrl}");
+                //    }
+                //    else if (fileType == "file")
+                //    {
+                //        var downloadUrl = (string)file["download_url"];
+                //        // use this URL to download the contents of the file
+                //        Console.WriteLine($"DOWNLOAD: {downloadUrl}");
+                //    }
+                //}
+
+                using (WebClient client = new WebClient())
+                {
+                    try
+                    {
+                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
+                        string url = client.DownloadString("https://api.github.com/repos/LordGurr/DiscordBot");
+                        string temp = "\"language\": \"";
+                        int start = url.IndexOf(temp);
+                        if (start >= 0)
+                        {
+                            int end = url.IndexOf("\"", start + 1 + temp.Length);
+                            await WriteLine("Programmerings språk: " + url.Substring(start + temp.Length, end));
+                        }
+                        temp = "\"updated_at\": \"";
+                        start = url.IndexOf(temp);
+                        if (start >= 0)
+                        {
+                            int end = url.IndexOf("\"", start + 1 + temp.Length);
+                            await WriteLine("Senast uppdaterad: " + Convert.ToDateTime(url.Substring(start + temp.Length, end)).ToLongDateString());
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        await WriteLine(e.Message);
+                    }
+                }
+                await WriteLine("Har fått " + TotalCommits("LordGurr/DiscordBot") + " commits totalt");
                 await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
-                await WriteLine("Github repository: https://github.com/LordGurr/DiscordBot");
+                await WriteLine("[Github repository.](https://github.com/LordGurr/DiscordBot");
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
@@ -886,6 +954,28 @@ namespace DiscordBot
                 });
 
                 SendString = string.Empty;
+            }
+
+            private int TotalCommits(string url)
+            {
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        int index = 100;
+                        string downloaded = client.DownloadString("https://api.github.com/repos/" + url + "/commits?per_page=" + index); // LordGurr/DiscordBot
+
+                        while (AllIndexesOf(downloaded, "\"message\": \"").Count >= index - 5)
+                        {
+                            index += 10;
+                        }
+                        return AllIndexesOf(downloaded, "\"message\": \"").Count;
+                    }
+                }
+                catch (Exception e)
+                {
+                    return 0;
+                }
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("savebotcoin")]
@@ -1693,7 +1783,7 @@ namespace DiscordBot
                                 }
                             }
 
-                            if ((double)sendCode.Length / 2048.0 > 1.0)
+                            if ((double)sendCode.Length / 2000.0 > 1.0)
                             {
                                 double result = Math.Ceiling((double)sendCode.Length / 2048.0);
                                 int size = (int)((double)sendCode.Length / result);
@@ -1701,7 +1791,7 @@ namespace DiscordBot
                                 for (int i = 0; i < result; i++)
                                 {
                                     string send = string.Empty;
-                                    if (latest + size + 1 >= sendCode.Length)
+                                    if (i + 1 >= result)
                                     {
                                         send = sendCode.Substring(latest, sendCode.Length - latest);
                                     }
@@ -1711,12 +1801,17 @@ namespace DiscordBot
                                     }
                                     send = "```cs\n" + send + "\n```";//\n``` ```cs
                                     //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                                    send += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
-                                    await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                                    if (i + 1 >= result)
                                     {
-                                        Title = "Code snippet " + (i + 1),
-                                        Description = send,
-                                    });
+                                        send += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                                    }
+
+                                    //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                                    //{
+                                    //    Title = "Code snippet " + (i + 1),
+                                    //    Description = send,
+                                    //});
+                                    await ctx.Channel.SendMessageAsync(send).ConfigureAwait(false);
                                     latest += size;
                                 }
                             }
@@ -1725,13 +1820,15 @@ namespace DiscordBot
                                 sendCode = "```cs\n" + sendCode + "\n```"; //``` ```cs
                                 //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
                                 sendCode += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
-                                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                                {
-                                    Title = "Code snippet",
-                                    Description = sendCode,
-                                });
+
+                                //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                                //{
+                                //    Title = "Code snippet",
+                                //    Description = sendCode,
+                                //});
+
+                                await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
                             }
-                            //await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
                         }
                         else
                         {
@@ -1956,7 +2053,7 @@ namespace DiscordBot
                 GiveBotCoin(ctx);
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("flipCoin")]
+            [DSharpPlus.CommandsNext.Attributes.Command("flipcoin")]
             [DSharpPlus.CommandsNext.Attributes.Description("Returnerar krona eller klave på slumpmässigt sätt.")]
             public async Task Coin(CommandContext ctx, string guess)
             {
@@ -1985,7 +2082,7 @@ namespace DiscordBot
                 GiveBotCoin(ctx);
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("Adventure")]
+            [DSharpPlus.CommandsNext.Attributes.Command("adventure")]
             [DSharpPlus.CommandsNext.Attributes.Description("Let's you play a simple minigame.")]
             public async Task Adven(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Input which direction you wan't to move in. up, down, left, right. Example: ?adventure right")]string direction)
             {
@@ -2031,7 +2128,7 @@ namespace DiscordBot
                 GiveBotCoin(ctx);
             }
 
-            [DSharpPlus.CommandsNext.Attributes.Command("Adventure")]
+            [DSharpPlus.CommandsNext.Attributes.Command("adventure")]
             [DSharpPlus.CommandsNext.Attributes.Description("Let's you play a simple minigame.")]
             public async Task Adven(CommandContext ctx)
             {
