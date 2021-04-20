@@ -1676,19 +1676,62 @@ namespace DiscordBot
                             sendCode = string.Empty;
                             for (int i = 0; i < linesToSend.Length; i++)
                             {
-                                linesToSend[i] = linesToSend[i].Remove(0, spacesToRemove);
-                                sendCode += linesToSend[i] + "\n";
+                                try
+                                {
+                                    if (spacesToRemove < linesToSend[i].Length)
+                                    {
+                                        linesToSend[i] = linesToSend[i].Remove(0, spacesToRemove);
+                                        sendCode += linesToSend[i] + "\n";
+                                    }
+                                    else
+                                    {
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    throw new ArgumentException(e.Message + " string " + i + ": " + linesToSend[i]);
+                                }
                             }
 
-                            sendCode = "```cs\n" + sendCode + "\n```";
-                            //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                            sendCode += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
-                            //await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
-                            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                            if ((double)sendCode.Length / 2048.0 > 1.0)
                             {
-                                Title = "Code snippet",
-                                Description = sendCode,
-                            });
+                                double result = Math.Ceiling((double)sendCode.Length / 2048.0);
+                                int size = (int)((double)sendCode.Length / result);
+                                int latest = 0;
+                                for (int i = 0; i < result; i++)
+                                {
+                                    string send = string.Empty;
+                                    if (latest + size + 1 >= sendCode.Length)
+                                    {
+                                        send = sendCode.Substring(latest, sendCode.Length - latest);
+                                    }
+                                    else
+                                    {
+                                        send = sendCode.Substring(latest, size);
+                                    }
+                                    send = "```cs\n" + send + "\n```";//``` ```cs
+                                    //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
+                                    send += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                                    await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                                    {
+                                        Title = "Code snippet " + (i + 1),
+                                        Description = send,
+                                    });
+                                    latest += size;
+                                }
+                            }
+                            else
+                            {
+                                sendCode = "```cs\n" + sendCode + "\n```"; //``` ```cs
+                                //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
+                                sendCode += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                                {
+                                    Title = "Code snippet",
+                                    Description = sendCode,
+                                });
+                            }
+                            //await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
                         }
                         else
                         {
