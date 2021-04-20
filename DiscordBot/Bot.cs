@@ -1664,7 +1664,7 @@ namespace DiscordBot
                             }
                             string sendCode = code.Substring(index, next - index);
                             string original = sendCode;
-                            string[] linesToSend = sendCode.Split('\n', '\\');
+                            string[] linesToSend = sendCode.Split('\n');
                             int spacesToRemove = 0;
                             for (int i = 0; i < linesToSend[0].Length; i++)
                             {
@@ -1681,8 +1681,14 @@ namespace DiscordBot
                             }
 
                             sendCode = "```cs\n" + sendCode + "\n```";
-                            sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                            await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
+                            //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
+                            sendCode += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                            //await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
+                            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                            {
+                                Title = "Code snippet",
+                                Description = sendCode,
+                            });
                         }
                         else
                         {
@@ -1697,6 +1703,7 @@ namespace DiscordBot
                 }
             }
 
+            //Lägger till fler brackets för att fixa koden }}
             [DSharpPlus.CommandsNext.Attributes.Command("nickname")]
             [DSharpPlus.CommandsNext.Attributes.Description("Döper om alla på servern.")]
             [DSharpPlus.CommandsNext.Attributes.RequireBotPermissions(Permissions.ManageNicknames)]
