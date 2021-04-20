@@ -1709,9 +1709,9 @@ namespace DiscordBot
                                     {
                                         send = sendCode.Substring(latest, size);
                                     }
-                                    send = "```cs\n" + send + "\n```";//``` ```cs
+                                    send = "```cs\n" + send + "\n```";//\n``` ```cs
                                     //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                                    send += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                                    send += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
                                     await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                                     {
                                         Title = "Code snippet " + (i + 1),
@@ -1724,7 +1724,7 @@ namespace DiscordBot
                             {
                                 sendCode = "```cs\n" + sendCode + "\n```"; //``` ```cs
                                 //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                                sendCode += "\n[Resten av koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
+                                sendCode += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
                                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                                 {
                                     Title = "Code snippet",
