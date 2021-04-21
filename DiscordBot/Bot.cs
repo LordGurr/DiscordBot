@@ -19,8 +19,9 @@ using System.Diagnostics;
 using System.Net;
 using HWND = System.IntPtr;
 using System.Net.Http;
-using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
+using DSharpPlus.CommandsNext.Converters;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -243,6 +244,101 @@ namespace DiscordBot
             }
         }
 
+        public async Task SaveMembers()
+        {
+            BinaryFormatter formatter = new BinaryFormatter();
+            for (int i = 0; i < kanalerna.Count; i++)
+            {
+                string fileName = "members" + kanalerna[i].realDiscordChannel.Id.ToString() + ".txt";
+                if (!File.Exists(fileName))
+                {
+                    File.Create(fileName);
+                }
+                try
+                {
+                    //using (FileStream stream = File.OpenWrite(fileName))
+                    //{
+                    //    formatter.Serialize(stream, kanalerna[i]);
+                    //}
+                    using (TextWriter tw = new StreamWriter("channels.txt"))
+                    {
+                        tw.WriteLine(kanalerna[i].ToString());
+                    }
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                }
+            }
+            using (TextWriter tw = new StreamWriter("channels.txt"))
+            {
+                for (int i = 0; i < kanalerna.Count; i++)
+                {
+                    tw.WriteLine("members" + kanalerna[i].realDiscordChannel.Id.ToString() + ".txt");
+                }
+                tw.WriteLine(kanalerna.Count + " stycken kanaler");
+            }
+        }
+
+        private static ChannelSaveData Load(string FileName)
+        {
+            using (var stream = System.IO.File.OpenRead(FileName))
+            {
+                var serializer = new XmlSerializer(typeof(ChannelSaveData));
+                return serializer.Deserialize(stream) as ChannelSaveData;
+            }
+        }
+
+        private async Task ReadAllMemebers()
+        {
+            string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
+            for (int i = 0; i < tempArray.Length - 1; i++)
+            {
+                string[] channel = File.ReadAllLines(tempArray[i]);
+
+                //kanalerna.Add(Load(tempArray[i]));
+                //kanalerna.Add(Convert.ChangeType(channel[0], (TypeCode)ChannelSaveData));
+                Type objType = typeof(DiscordMember);
+                Type type = Type.GetType(objType.AssemblyQualifiedName);
+                DiscordMember instance = (DiscordMember)Activator.CreateInstance(type);
+            }
+        }
+
+        private async Task AddMembers(MessageCreateEventArgs e)
+        {
+            if (e.Channel.Name != null)
+            {
+                int[] channel = ChannelIndex(e);
+                if (channel[1] < 0)
+                {
+                    if (channel[0] < 0)
+                    {
+                        kanalerna.Add(new ChannelSaveData(e.Channel));
+                        channel[0] = kanalerna.Count - 1;
+                    }
+                    List<DiscordMember> temp = e.Message.Channel.Users.ToList();
+                    List<int> indexesFound = new List<int>();
+                    for (int i = 0; i < temp.Count; i++)
+                    {
+                        for (int a = 0; a < kanalerna[channel[0]].discordUsers.Count; a++)
+                        {
+                            if (kanalerna[channel[0]].discordUsers[a].member == temp[i])
+                            {
+                                indexesFound.Add(i);
+                            }
+                        }
+                    }
+                    for (int i = 0; i < temp.Count; i++)
+                    {
+                        if (!indexesFound.Contains(i))
+                        {
+                            kanalerna[channel[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                        }
+                    }
+                }
+            }
+        }
+
         public async Task RunAsync()
         {
             AdventureCommands.bot = this;
@@ -279,6 +375,13 @@ namespace DiscordBot
             lastSave = DateTime.Now;
             Client.MessageCreated += async (s, e) =>
            {
+               try
+               {
+                   await AddMembers(e);
+               }
+               catch (Exception)
+               {
+               }
                if (e.Message.Content.ToLower().Contains("kommunism") || e.Message.Content.ToLower().Contains("communism"))
                    await e.Message.RespondAsync("All hail the motherland!").ConfigureAwait(false);
                else if (e.Message.Content.ToLower().Contains("när är"))
@@ -329,6 +432,13 @@ namespace DiscordBot
                 await WriteLine("Har läst in " + emotions.Length + " känslor");
                 await ReadBotCoin();
                 await WriteLine("Har läst in " + botCoinSaves.Count + " användares botcoins");
+                //await ReadAllMemebers();
+                int members = 0;
+                for (int i = 0; i < kanalerna.Count; i++)
+                {
+                    members += kanalerna[i].discordUsers.Count;
+                }
+                await WriteLine("Har läst in " + kanalerna.Count + " kanaler och " + members + " medlemmar");
                 TimeSpan timeSpan = DateTime.Now - dateTime;
                 double totalMilliseconds = Convert.ToInt32(timeSpan.TotalMilliseconds * 100);
                 totalMilliseconds /= 100;
@@ -375,6 +485,7 @@ namespace DiscordBot
                 await Task.Delay(Convert.ToInt32(sparTid.TotalMilliseconds));
                 lastSave = DateTime.Now;
                 await SaveBotCoin();
+                //await SaveMembers();
             }
             await WriteLine("Shutting down.");
             if (restart)
@@ -526,17 +637,36 @@ namespace DiscordBot
             return new int[2] { -1, -1 };
         }
 
+        private static int[] ChannelIndex(CommandContext ctx)
+        {
+            for (int i = 0; i < kanalerna.Count; i++)
+            {
+                if (kanalerna[i].discordChannel == ctx.Channel.Id)
+                {
+                    for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                    {
+                        if (kanalerna[i].discordUsers[a].user == ctx.Message.Author.Id)
+                        {
+                            return new int[2] { i, a };
+                        }
+                    }
+                    return new int[2] { i, -1 };
+                }
+            }
+            return new int[2] { -1, -1 };
+        }
+
         private static void WriteLatestMessage(MessageCreateEventArgs ctx)
         {
             int[] channel = ChannelIndex(ctx);
             if (channel[0] < 0)
             {
-                kanalerna.Add(new ChannelSaveData(ctx.Channel.Id));
+                kanalerna.Add(new ChannelSaveData(ctx.Channel));
                 channel[0] = kanalerna.Count - 1;
             }
             if (channel[1] < 0)
             {
-                kanalerna[channel[0]].discordUsers.Add(new DiscordUserSaveData(ctx.Author.Id));
+                kanalerna[channel[0]].discordUsers.Add(new DiscordMemberSaveData(ctx.Author.Id));
                 channel[1] = kanalerna[channel[0]].discordUsers.Count - 1;
             }
             kanalerna[channel[0]].discordUsers[channel[1]].AddLatestMessage(ctx.Message.Content);
@@ -749,6 +879,38 @@ namespace DiscordBot
                 }
             }
 
+            [DSharpPlus.CommandsNext.Attributes.Command("members")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Returns all members stored.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task WriteMembers(CommandContext ctx)
+            {
+                try
+                {
+                    for (int i = 0; i < kanalerna.Count; i++)
+                    {
+                        SendString = string.Empty;
+                        //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
+                        await WriteLine(kanalerna[i].realDiscordChannel.Name);
+                        string title = SendString;
+                        SendString = string.Empty;
+                        for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                        {
+                            await WriteLine("medlem " + (a + 1) + ": " + kanalerna[i].discordUsers[a].member.Username);
+                            //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
+                        }
+                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                        {
+                            Title = title,
+                            Description = SendString,
+                        });
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
+
             [DSharpPlus.CommandsNext.Attributes.Command("system")]
             [DSharpPlus.CommandsNext.Attributes.Description("Returns system info.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -920,6 +1082,12 @@ namespace DiscordBot
                     }
                 }
                 await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
+                int members = 0;
+                for (int i = 0; i < kanalerna.Count; i++)
+                {
+                    members += kanalerna[i].discordUsers.Count;
+                }
+                await WriteLine("Har sparat " + kanalerna.Count + " kanaler och " + members + " medlemmar");
                 await WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
@@ -1142,6 +1310,7 @@ namespace DiscordBot
                     //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
                     await CommandWriteLine("Stänger ner omdelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
                     await SaveAllbotcoin(ctx);
+                    //await bot.SaveMembers();
                     await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                     await Client.DisconnectAsync();
                     Client.Dispose();
@@ -1796,10 +1965,39 @@ namespace DiscordBot
                         return;
                     }
                 }
-                DiscordMember[] members = ctx.Channel.Users.ToArray();
+                List<DiscordMember> members = ctx.Channel.Users.ToList();
+                var temp = ctx.Guild.Members.ToList();
+                DiscordMemberConverter converter = new DiscordMemberConverter();
+                int[] kanalIndex = ChannelIndex(ctx);
+                if (kanalIndex[0] >= 0)
+                {
+                    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                    {
+                        bool found = false;
+                        for (int a = 0; a < members.Count; a++)
+                        {
+                            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                        {
+                            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                        }
+                    }
+                }
+                for (int i = 0; i < temp.Count; i++)
+                {
+                    if (!members.Contains(temp[i].Value))
+                    {
+                        members.Add(temp[i].Value);
+                    }
+                }
                 int membersModified = 0;
                 int membersNotAbleToModify = 0;
-                for (int i = 0; i < members.Length; i++)
+                for (int i = 0; i < members.Count; i++)
                 {
                     try
                     {
@@ -2421,14 +2619,17 @@ namespace DiscordBot
             }
         }
 
+        [Serializable]
         private class ChannelSaveData
         {
             public ulong discordChannel;
-            public List<DiscordUserSaveData> discordUsers = new List<DiscordUserSaveData>();
+            public DiscordChannel realDiscordChannel;
+            public List<DiscordMemberSaveData> discordUsers = new List<DiscordMemberSaveData>();
 
-            public ChannelSaveData(ulong _discordChannel)
+            public ChannelSaveData(DiscordChannel _discordChannel)
             {
-                discordChannel = _discordChannel;
+                realDiscordChannel = _discordChannel;
+                discordChannel = realDiscordChannel.Id;
             }
         }
 
@@ -2442,6 +2643,76 @@ namespace DiscordBot
             public DiscordUserSaveData(ulong _user)
             {
                 user = _user;
+            }
+
+            public void AddLatestMessage(string newMessage)
+            {
+                for (int i = 0; i < latestMessages.Length; i++)
+                {
+                    timeOfLatestMessage[i] = timeOfLatestMessage[i + 1 < timeOfLatestMessage.Length ? i + 1 : i];
+                }
+                timeOfLatestMessage[timeOfLatestMessage.Length - 1] = DateTime.Now;
+                for (int i = 0; i < latestMessages.Length; i++)
+                {
+                    latestMessages[i] = latestMessages[i + 1 < latestMessages.Length ? i + 1 : i];
+                }
+                latestMessages[latestMessages.Length - 1] = newMessage;
+            }
+
+            public bool IsSpam(int seconds, string message, int amountEqual)
+            {
+                TimeSpan timeSpan = DateTime.Now - DateTime.Now;
+                TimeSpan temp;
+                for (int i = 0; i < timeOfLatestMessage.Length; i++)
+                {
+                    temp = timeOfLatestMessage[i] - timeOfLatestMessage[i - 1 > 0 ? i - 1 : i];
+                    timeSpan.Add(temp);
+                }
+                temp = DateTime.Now - timeOfLatestMessage[timeOfLatestMessage.Length - 1];
+                timeSpan.Add(temp);
+                timeSpan.Divide(4);
+                if (timeSpan.TotalSeconds < seconds)
+                {
+                    return false;
+                }
+                //TimeSpan timeSpan = DateTime.Now - timeOfLatestMessage[timeOfLatestMessage.Length];
+                int amountfound = 0;
+                if (timeSpan.TotalMinutes < seconds)
+                {
+                    for (int i = 0; i < latestMessages.Length; i++)
+                    {
+                        if (latestMessages[i] == message)
+                        {
+                            amountfound++;
+                            if (amountfound >= amountEqual)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+
+        [Serializable]
+        private class DiscordMemberSaveData
+        {
+            public DiscordMember member;
+            public ulong user;
+
+            public string[] latestMessages = new string[3];
+            public DateTime[] timeOfLatestMessage = new DateTime[3];
+
+            public DiscordMemberSaveData(DiscordMember _member)
+            {
+                member = _member;
+                user = member.Id;
+            }
+
+            public DiscordMemberSaveData(ulong id)
+            {
+                user = id;
             }
 
             public void AddLatestMessage(string newMessage)
