@@ -894,65 +894,66 @@ namespace DiscordBot
                 {
                     await WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
                 }
-                //var httpClient = new HttpClient();
-                //httpClient.DefaultRequestHeaders.UserAgent.Add(
-                //    new ProductInfoHeaderValue("MyApplication", "1"));
-                //var repo = "markheath/azure-deploy-manage-containers";
-                //var contentsUrl = $"https://api.github.com/repos/{repo}/contents";
-                //var contentsJson = await httpClient.GetStringAsync(contentsUrl);
-                //var contents = (JArray)JsonConvert.DeserializeObject(contentsJson);
-                //foreach (var file in contents)
-                //{
-                //    var fileType = (string)file["type"];
-                //    if (fileType == "dir")
-                //    {
-                //        var directoryContentsUrl = (string)file["url"];
-                //        // use this URL to list the contents of the folder
-                //        Console.WriteLine($"DIR: {directoryContentsUrl}");
-                //    }
-                //    else if (fileType == "file")
-                //    {
-                //        var downloadUrl = (string)file["download_url"];
-                //        // use this URL to download the contents of the file
-                //        Console.WriteLine($"DOWNLOAD: {downloadUrl}");
-                //    }
-                //}
-
-                using (WebClient client = new WebClient())
+                using (HttpClient client = new HttpClient())
                 {
                     try
                     {
-                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
-                        string url = client.DownloadString("https://api.github.com/repos/LordGurr/DiscordBot");
-                        string temp = "\"language\": \"";
-                        int start = url.IndexOf(temp);
-                        if (start >= 0)
+                        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                        client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");//Set the User Agent to "request"
+
+                        using (HttpResponseMessage response = client.GetAsync("https://api.github.com/repos/LordGurr/DiscordBot").Result)
                         {
-                            int end = url.IndexOf("\"", start + 1 + temp.Length);
-                            await WriteLine("Programmerings språk: " + url.Substring(start + temp.Length, end));
+                            response.EnsureSuccessStatusCode();
+                            string responseBody = await response.Content.ReadAsStringAsync();
+                            string temp = "\"language\":\"";
+                            int start = responseBody.IndexOf(temp);
+                            if (start >= 0)
+                            {
+                                int end = responseBody.IndexOf("\",", start + 1 + temp.Length);
+                                await WriteLine("Programmerings språk: " + responseBody.Substring(start + temp.Length, end - start - 12));
+                            }
+                            temp = "\"updated_at\":\"";
+                            start = responseBody.IndexOf(temp);
+                            if (start >= 0)
+                            {
+                                int end = responseBody.IndexOf("\"", start + 1 + temp.Length);
+                                string send = responseBody.Substring(start + temp.Length, end - start - 15);
+                                DateTime dateTime = Convert.ToDateTime(send);
+                                await WriteLine("Senast uppdaterad: " + dateTime.ToLongDateString());
+                            }
                         }
-                        temp = "\"updated_at\": \"";
-                        start = url.IndexOf(temp);
-                        if (start >= 0)
+                        int index = 100;
+                        string url = "LordGurr/DiscordBot";
+                        string downloaded = "message";
+                        for (int i = 0; i < 7; i++)
                         {
-                            int end = url.IndexOf("\"", start + 1 + temp.Length);
-                            await WriteLine("Senast uppdaterad: " + Convert.ToDateTime(url.Substring(start + temp.Length, end)).ToLongDateString());
+                            downloaded += downloaded;
                         }
+                        while (AllIndexesOf(downloaded, "message").Count >= index - 5)
+                        {
+                            index += 10;
+
+                            using (HttpResponseMessage response = client.GetAsync("https://api.github.com/repos/" + url + "/commits?per_page=" + index).Result)
+                            {
+                                response.EnsureSuccessStatusCode();
+                                downloaded = await response.Content.ReadAsStringAsync(); // LordGurr/DiscordBot
+                            }
+                        }
+                        await WriteLine("Har fått " + AllIndexesOf(downloaded, "message").Count + " commits totalt");
                     }
                     catch (Exception e)
                     {
                         await WriteLine(e.Message);
                     }
                 }
-                await WriteLine("Har fått " + TotalCommits("LordGurr/DiscordBot") + " commits totalt");
                 await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
-                await WriteLine("[Github repository.](https://github.com/LordGurr/DiscordBot");
+                await WriteLine("[Github repository.](https://github.com/LordGurr/DiscordBot)");
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
                     Description = SendString,
                 });
-
                 SendString = string.Empty;
             }
 
@@ -960,17 +961,7 @@ namespace DiscordBot
             {
                 try
                 {
-                    using (WebClient client = new WebClient())
-                    {
-                        int index = 100;
-                        string downloaded = client.DownloadString("https://api.github.com/repos/" + url + "/commits?per_page=" + index); // LordGurr/DiscordBot
-
-                        while (AllIndexesOf(downloaded, "\"message\": \"").Count >= index - 5)
-                        {
-                            index += 10;
-                        }
-                        return AllIndexesOf(downloaded, "\"message\": \"").Count;
-                    }
+                    return 0;
                 }
                 catch (Exception e)
                 {
@@ -1289,61 +1280,17 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task Activity(CommandContext ctx, int activityType, params string[] inputs)
             {
-                //DiscordClient discord = ctx.Client;
-                //string input = Console.ReadLine();
                 string input = "";
-                //for (int i = 0; i < inputs.Length; i++)
-                //{
-                //    try
-                //    {
-                //        //inputs[i] = inputs[i].Trim('<', '>');
-                //        //inputs[i] = inputs[i].Trim('<', '>', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-                //        if (inputs[i].Contains('<', '>'))
-                //        {
-                //            string[] temp = inputs[i].Split('<', '>');
-                //            for (int a = 0; a < temp.Length; a++)
-                //            {
-                //                try
-                //                {
-                //                    DiscordEmoji emoji = DiscordEmoji.FromName(ctx.Client, temp[a].Trim('<', '>', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'));
-                //                    //activity.Name.Replace(inputs[i], "");
-                //                    input += $"{emoji}";
-                //                    await ctx.RespondAsync($"{emoji}");
-                //                }
-                //                catch (Exception e)
-                //                {
-                //                    await ctx.RespondAsync(e.Message);
-                //                    input += inputs[i];
-                //                }
-                //            }
-                //        }
-                //        else
-                //        {
-                //            DiscordEmoji emoji = DiscordEmoji.FromName(ctx.Client, inputs[i].Trim('<', '>', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'));
-                //            //activity.Name.Replace(inputs[i], "");
-                //            input += $"{emoji}";
-                //            await ctx.RespondAsync($"{emoji}");
-                //        }
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        await ctx.RespondAsync(e.Message);
-                //        input += inputs[i];
-                //    }
-                //}
-
                 // Real Shit
                 for (int i = 0; i < inputs.Length; i++)
                 {
                     input += inputs[i] + " ";
                 }
-
                 var activity = new DiscordActivity
                 {
                     Name = input,
                     ActivityType = (ActivityType)activityType,
                 };
-
                 try
                 {
                     await Client.UpdateStatusAsync(activity);
