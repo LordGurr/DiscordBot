@@ -97,24 +97,6 @@ namespace DiscordBot
                     var g = Client.GetChannelAsync(827869624808374293);
                     commandLine = g.Result;
                 }
-                //Console.WriteLine(str);
-                //await commandLine.(img);
-                //await commandLine.SendMessageAsync(embed: new DiscordEmbedBuilder
-                //{
-                //    Title = "Some title",
-                //    Description = "Some description",
-                //    ImageUrl = "https://media2.giphy.com/media/RTvLtYTwR3w2c/giphy.gif" //or some other random image url
-                //});
-                //await commandLine.SendMessageAsync(embed: new DiscordEmbedBuilder
-                //{
-                //    Title = "Some title",
-                //    Description = "Some description",
-                //    ImageUrl = "https://cdn.glitch.com/360f5555-e790-490c-9f53-9625be6a98f5%2FLinkShotCropped.png?v=1604685834796" //or some other random image url
-                //});
-                //await commandLine.SendMessageAsync(builder: new DiscordMessageBuilder
-                //{
-                //    Content = "Den här funkar inte"
-                //});
                 using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
                     var msg = await new DiscordMessageBuilder()
@@ -123,7 +105,7 @@ namespace DiscordBot
 
                         .SendAsync(commandLine);
                 }
-                await WriteLine("Uppladdat: " + path + " till kanalen: " + commandLine.Name + ".");
+                //await WriteLine("Uppladdat: " + path + " till kanalen: " + commandLine.Name + ".");
             }
             catch (Exception e)
             {
@@ -141,24 +123,6 @@ namespace DiscordBot
                     var g = Client.GetChannelAsync(827869624808374293);
                     commandLine = g.Result;
                 }
-                //Console.WriteLine(str);
-                //await commandLine.(img);
-                //await commandLine.SendMessageAsync(embed: new DiscordEmbedBuilder
-                //{
-                //    Title = "Some title",
-                //    Description = "Some description",
-                //    ImageUrl = "https://media2.giphy.com/media/RTvLtYTwR3w2c/giphy.gif" //or some other random image url
-                //});
-                //await commandLine.SendMessageAsync(embed: new DiscordEmbedBuilder
-                //{
-                //    Title = "Some title",
-                //    Description = "Some description",
-                //    ImageUrl = "https://cdn.glitch.com/360f5555-e790-490c-9f53-9625be6a98f5%2FLinkShotCropped.png?v=1604685834796" //or some other random image url
-                //});
-                //await commandLine.SendMessageAsync(builder: new DiscordMessageBuilder
-                //{
-                //    Content = "Den här funkar inte"
-                //});
                 using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
                     var msg = await new DiscordMessageBuilder()
@@ -176,8 +140,7 @@ namespace DiscordBot
                             .SendAsync(commandLine);
                     }
                 }
-                await WriteLine("Uppladdat: " + path + " till kanalen: " + channel.Name + ".", channel);
-                //await WriteLine("Uploaded: " + path + " to the channel: " + commandLine.Name + ".", channel);
+                //await WriteLine("Uppladdat: " + path + " till kanalen: " + channel.Name + ".", channel);
             }
             catch (Exception e)
             {
@@ -913,6 +876,15 @@ namespace DiscordBot
                                 int end = responseBody.IndexOf("\",", start + 1 + temp.Length);
                                 await WriteLine("Programmerings språk: " + responseBody.Substring(start + temp.Length, end - start - 12));
                             }
+                            temp = "\"created_at\":\"";
+                            start = responseBody.IndexOf(temp);
+                            if (start >= 0)
+                            {
+                                int end = responseBody.IndexOf("\"", start + 1 + temp.Length);
+                                string send = responseBody.Substring(start + temp.Length, end - start - 14);
+                                DateTime dateTime = Convert.ToDateTime(send);
+                                await WriteLine("Github repo skapades: " + dateTime.ToLongDateString());
+                            }
                             temp = "\"updated_at\":\"";
                             start = responseBody.IndexOf(temp);
                             if (start >= 0)
@@ -948,7 +920,7 @@ namespace DiscordBot
                     }
                 }
                 await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
-                await WriteLine("[Github repository.](https://github.com/LordGurr/DiscordBot)");
+                await WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
@@ -983,7 +955,7 @@ namespace DiscordBot
 
             [DSharpPlus.CommandsNext.Attributes.Command("upload")]
             [DSharpPlus.CommandsNext.Attributes.Aliases("laddaup")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Laddar upp en specificerad fil.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task FileUpload(CommandContext ctx, params string[] filePath)
             {
@@ -1027,7 +999,7 @@ namespace DiscordBot
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("app")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot off application.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task ScreenshotApp(CommandContext ctx)
             {
@@ -1049,7 +1021,7 @@ namespace DiscordBot
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("getapps")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Skriver ut alla program som är i gång.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task GetApp(CommandContext ctx)
             {
@@ -1072,7 +1044,7 @@ namespace DiscordBot
 
             [DSharpPlus.CommandsNext.Attributes.Command("appsscreenshot")]
             [DSharpPlus.CommandsNext.Attributes.Aliases("appsskärmbilder", "appsskärmdumpar")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Tar en skärmdump på alla program som är i gång.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task GetAppScreen(CommandContext ctx)
             {
@@ -1535,6 +1507,13 @@ namespace DiscordBot
                 GiveBotCoin(ctx);
             }
 
+            [DSharpPlus.CommandsNext.Attributes.Command("remindme")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
+            public async Task Remind(CommandContext ctx)
+            {
+                await ctx.Channel.SendMessageAsync("remindme has to have a time and measurement inputted to function.\nExample: ?remindme 30 minutes").ConfigureAwait(false);
+            }
+
             public void SaveImage(string filename, System.Drawing.Imaging.ImageFormat format, string imageUrl)
             {
                 WebClient client = new WebClient();
@@ -1552,7 +1531,7 @@ namespace DiscordBot
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("image2string")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Converts an image to a string.\nIf no image provided sends toad pics.")]
             public async Task Image2string(CommandContext ctx)
             {
                 //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
@@ -1583,7 +1562,6 @@ namespace DiscordBot
 
                     //char[] chars = { '#', '#', '@', '%', '=', '+', 'º', ':', '-', '.' };
                     string[] chars = { "█", "▓", "▒", "░" };// "   "
-                    string empty = "‌‌ ";
                     image.SelectActiveFrame(dimension, 0);
                     for (int h = 0; h < image.Height; h++)
                     {
@@ -1610,7 +1588,6 @@ namespace DiscordBot
 
                         await WriteLine(temp);
                     }
-
                     await ctx.Channel.SendMessageAsync(SendString).ConfigureAwait(false);
                     GiveBotCoin(ctx);
                 }
@@ -1623,7 +1600,7 @@ namespace DiscordBot
 
             [DSharpPlus.CommandsNext.Attributes.Command("face")]
             [DSharpPlus.CommandsNext.Attributes.Aliases("thispersondoesnotexist", "tpdne", "human")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Reminds you at specified time")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Sends a generated picture from [tpdne](https://thispersondoesnotexist.com)")]
             public async Task ThisPersonDoesNotExist(CommandContext ctx)
             {
                 //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
@@ -1650,6 +1627,7 @@ namespace DiscordBot
 
             [DSharpPlus.CommandsNext.Attributes.Command("inspirobot")]
             [DSharpPlus.CommandsNext.Attributes.Aliases("inspiroquote", "inspiro")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Sends a generated quote from [inspirobot](https://inspirobot.me/)")]
             public async Task InspiroCitat(CommandContext ctx)
             {
                 try
@@ -1660,6 +1638,7 @@ namespace DiscordBot
                         string url = client.DownloadString("https://inspirobot.me/api?generate=true");
                         SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
                         await bot.UploadFile(tempImagePng, ctx.Channel);
+                        GiveBotCoin(ctx);
                     }
                 }
                 catch (Exception e)
@@ -1720,9 +1699,6 @@ namespace DiscordBot
                                         linesToSend[i] = linesToSend[i].Remove(0, spacesToRemove);
                                         sendCode += linesToSend[i] + "\n";
                                     }
-                                    else
-                                    {
-                                    }
                                 }
                                 catch (Exception e)
                                 {
@@ -1776,6 +1752,7 @@ namespace DiscordBot
 
                                 await ctx.Channel.SendMessageAsync(sendCode).ConfigureAwait(false);
                             }
+                            GiveBotCoin(ctx);
                         }
                         else
                         {
@@ -1843,6 +1820,37 @@ namespace DiscordBot
                 {
                     await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".").ConfigureAwait(false);
                 }
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("nickname")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Döper om alla på servern.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireBotPermissions(Permissions.ManageNicknames)]
+            public async Task Nickname(CommandContext ctx)
+            {
+                if (ctx.Channel.Name == null)
+                {
+                    await ctx.Channel.SendMessageAsync("Det här måste skickas i en server.").ConfigureAwait(false);
+                    return;
+                }
+                if (ctx.Member.Hierarchy < int.MaxValue)
+                {
+                    var a = Client.CurrentApplication.Owners.ToArray();
+                    bool found = false;
+                    for (int i = 0; i < a.Length; i++)
+                    {
+                        if (ctx.Member.Id == a[i].Id)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        await ctx.Channel.SendMessageAsync("Du måste vara admin för att använda detta kommand.").ConfigureAwait(false);
+                        return;
+                    }
+                }
+                await ctx.Channel.SendMessageAsync("nickname behöver en string med namnet medlemmar ska döpas till.\nExempel: ?nickname kyckling").ConfigureAwait(false);
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("math")]
