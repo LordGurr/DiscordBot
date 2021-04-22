@@ -52,8 +52,11 @@ namespace DiscordBot
         private DateTime lastSave;
         private TimeSpan sparTid;
         public Stopwatch sw;
+        private bool stopAll = false;
 
         public const string tempImagePng = "screenshotTemp.png";
+
+        private string[] channelsToAdd;
         //public VoiceNextExtension Voice { get; set; } //To play music
 
         private async Task WriteLine(string str)
@@ -246,13 +249,14 @@ namespace DiscordBot
 
         public async Task SaveMembers()
         {
-            BinaryFormatter formatter = new BinaryFormatter();
+            //BinaryFormatter formatter = new BinaryFormatter();
             for (int i = 0; i < kanalerna.Count; i++)
             {
-                string fileName = "members" + kanalerna[i].realDiscordChannel.Id.ToString() + ".txt";
+                string fileName = kanalerna[i].discordChannel.ToString() + ".txt";
                 if (!File.Exists(fileName))
                 {
-                    File.Create(fileName);
+                    var temp = File.Create(fileName);
+                    temp.Close();
                 }
                 try
                 {
@@ -260,9 +264,25 @@ namespace DiscordBot
                     //{
                     //    formatter.Serialize(stream, kanalerna[i]);
                     //}
-                    using (TextWriter tw = new StreamWriter("channels.txt"))
+                    if (kanalerna[i].finished)
                     {
-                        tw.WriteLine(kanalerna[i].ToString());
+                        using (TextWriter tw = new StreamWriter(fileName))
+                        {
+                            for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                            {
+                                tw.WriteLine(kanalerna[i].discordUsers[a].user.ToString());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (TextWriter tw = new StreamWriter(fileName))
+                        {
+                            for (int a = 0; a < kanalerna[i].membersToAdd.Length; a++)
+                            {
+                                tw.WriteLine(kanalerna[i].membersToAdd[a]);
+                            }
+                        }
                     }
                 }
                 catch (Exception e)
@@ -274,10 +294,16 @@ namespace DiscordBot
             {
                 for (int i = 0; i < kanalerna.Count; i++)
                 {
-                    tw.WriteLine("members" + kanalerna[i].realDiscordChannel.Id.ToString() + ".txt");
+                    tw.WriteLine(kanalerna[i].discordChannel.ToString() + ".txt");
                 }
                 tw.WriteLine(kanalerna.Count + " stycken kanaler");
             }
+            int members = 0;
+            for (int i = 0; i < kanalerna.Count; i++)
+            {
+                members += kanalerna[i].discordUsers.Count;
+            }
+            await WriteLine("sparade " + kanalerna.Count + " kanaler och " + members + " medlemmar");
         }
 
         private static ChannelSaveData Load(string FileName)
@@ -294,13 +320,16 @@ namespace DiscordBot
             string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
             for (int i = 0; i < tempArray.Length - 1; i++)
             {
-                string[] channel = File.ReadAllLines(tempArray[i]);
+                string[] members = File.ReadAllLines(tempArray[i]);
 
                 //kanalerna.Add(Load(tempArray[i]));
                 //kanalerna.Add(Convert.ChangeType(channel[0], (TypeCode)ChannelSaveData));
-                Type objType = typeof(DiscordMember);
-                Type type = Type.GetType(objType.AssemblyQualifiedName);
-                DiscordMember instance = (DiscordMember)Activator.CreateInstance(type);
+
+                kanalerna.Add(new ChannelSaveData(Convert.ToUInt64(tempArray[i].Replace(".txt", ""))));
+                kanalerna[kanalerna.Count - 1].membersToAdd = members;
+                //Type objType = typeof(DiscordMember);
+                //Type type = Type.GetType(objType.AssemblyQualifiedName);
+                //DiscordMember instance = (DiscordMember)Activator.CreateInstance(type);
             }
         }
 
@@ -315,6 +344,10 @@ namespace DiscordBot
                     {
                         kanalerna.Add(new ChannelSaveData(e.Channel));
                         channel[0] = kanalerna.Count - 1;
+                    }
+                    else if (kanalerna[channel[0]].realDiscordChannel == null)
+                    {
+                        kanalerna[channel[0]].realDiscordChannel = e.Channel;
                     }
                     List<DiscordMember> temp = e.Message.Channel.Users.ToList();
                     List<int> indexesFound = new List<int>();
@@ -333,6 +366,34 @@ namespace DiscordBot
                         if (!indexesFound.Contains(i))
                         {
                             kanalerna[channel[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                        }
+                    }
+                    List<DiscordChannel> channels = e.Guild.Channels.Values.ToList();
+                    for (int i = 0; i < channels.Count; i++)
+                    {
+                        ChannelSaveData curChannel = kanalerna.Find(a => a.discordChannel == channels[i].Id);
+
+                        if (curChannel != null && !curChannel.finished)
+                        {
+                            List<DiscordMember> curUsers = channels[i].Users.ToList();
+                            for (int a = 0; a < curUsers.Count; a++)
+                            {
+                                if (!curChannel.discordUsers.Any(o => o.user == curUsers[a].Id))
+                                {
+                                    curChannel.discordUsers.Add(new DiscordMemberSaveData(curUsers[a]));
+                                }
+                            }
+                            for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                            {
+                                var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                                if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                                {
+                                    curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                                }
+                            }
+                            curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                            curChannel.finished = true;
+                            break;
                         }
                     }
                 }
@@ -377,10 +438,14 @@ namespace DiscordBot
            {
                try
                {
-                   await AddMembers(e);
+                   if (!stopAll)
+                   {
+                       await AddMembers(e);
+                   }
                }
-               catch (Exception)
+               catch (Exception ex)
                {
+                   await WriteLine(e.Message + "\n" + ex.Message);
                }
                if (e.Message.Content.ToLower().Contains("kommunism") || e.Message.Content.ToLower().Contains("communism"))
                    await e.Message.RespondAsync("All hail the motherland!").ConfigureAwait(false);
@@ -432,7 +497,7 @@ namespace DiscordBot
                 await WriteLine("Har läst in " + emotions.Length + " känslor");
                 await ReadBotCoin();
                 await WriteLine("Har läst in " + botCoinSaves.Count + " användares botcoins");
-                //await ReadAllMemebers();
+                await ReadAllMemebers();
                 int members = 0;
                 for (int i = 0; i < kanalerna.Count; i++)
                 {
@@ -484,8 +549,11 @@ namespace DiscordBot
             {
                 await Task.Delay(Convert.ToInt32(sparTid.TotalMilliseconds));
                 lastSave = DateTime.Now;
-                await SaveBotCoin();
-                //await SaveMembers();
+                if (!stopAll)
+                {
+                    await SaveBotCoin();
+                    await SaveMembers();
+                }
             }
             await WriteLine("Shutting down.");
             if (restart)
@@ -884,30 +952,51 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task WriteMembers(CommandContext ctx)
             {
-                try
+                if (!bot.stopAll)
                 {
-                    for (int i = 0; i < kanalerna.Count; i++)
+                    try
                     {
-                        SendString = string.Empty;
-                        //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
-                        await WriteLine(kanalerna[i].realDiscordChannel.Name);
-                        string title = SendString;
-                        SendString = string.Empty;
-                        for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                        for (int i = 0; i < kanalerna.Count; i++)
                         {
-                            await WriteLine("medlem " + (a + 1) + ": " + kanalerna[i].discordUsers[a].member.Username);
-                            //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
+                            SendString = string.Empty;
+                            //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
+                            if (kanalerna[i].realDiscordChannel != null)
+                            {
+                                await WriteLine(kanalerna[i].realDiscordChannel.Name);
+                            }
+                            else
+                            {
+                                await WriteLine("kanal " + (i + 1));
+                            }
+                            string title = SendString;
+                            SendString = string.Empty;
+                            if (kanalerna[i].discordUsers.Count < 1)
+                            {
+                                await WriteLine(kanalerna[i].membersToAdd.Length + " medlemmar som kommer läggas till så fort någon skriver något");
+                            }
+                            else
+                            {
+                                for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                                {
+                                    await WriteLine("medlem " + (a + 1) + ": " + kanalerna[i].discordUsers[a].member.Username);
+                                    //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
+                                }
+                            }
+                            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                            {
+                                Title = title,
+                                Description = SendString,
+                            });
                         }
-                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                        {
-                            Title = title,
-                            Description = SendString,
-                        });
+                    }
+                    catch (Exception e)
+                    {
+                        await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
                     }
                 }
-                catch (Exception e)
+                else
                 {
-                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("bot shutting down").ConfigureAwait(false);
                 }
             }
 
@@ -1306,13 +1395,15 @@ namespace DiscordBot
                 {
                     bot.restart = false;
                     bot.shutdown = true;
+                    bot.stopAll = true;
                     //TimeSpan temp = DateTime.Now - lastSave;
                     //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
                     await CommandWriteLine("Stänger ner omdelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
-                    await SaveAllbotcoin(ctx);
-                    //await bot.SaveMembers();
-                    await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                     await Client.DisconnectAsync();
+                    await Task.Delay(500);
+                    await SaveAllbotcoin(ctx);
+                    await bot.SaveMembers();
+                    await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                     Client.Dispose();
                     Environment.Exit(0);
                 }
@@ -1343,6 +1434,7 @@ namespace DiscordBot
                     await CommandWriteLine("Startar om inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nReboot är satt till " + bot.restart + ".", ctx);
                     shutdownTime = DateTime.Now.AddMinutes(bot.sparTid.TotalMinutes - temp.TotalMinutes);
                     await Activity(ctx, 2, "Rebooting " + shutdownTime.ToShortTimeString());
+                    await Client.DisconnectAsync();
                     //await TakeScreenshotAndUpload(e);
                 }
                 else
@@ -1371,6 +1463,7 @@ namespace DiscordBot
                     await CommandWriteLine("Stänger ner inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nKommer inte att starta igen.", ctx);
                     shutdownTime = DateTime.Now.AddMinutes(bot.sparTid.TotalMinutes - temp.TotalMinutes);
                     await Activity(ctx, 2, "Shutdown " + shutdownTime.ToShortTimeString());
+                    await Client.DisconnectAsync();
                     //await TakeScreenshotAndUpload(e);
                 }
                 else
@@ -1965,58 +2058,87 @@ namespace DiscordBot
                         return;
                     }
                 }
-                List<DiscordMember> members = ctx.Channel.Users.ToList();
-                var temp = ctx.Guild.Members.ToList();
-                DiscordMemberConverter converter = new DiscordMemberConverter();
-                int[] kanalIndex = ChannelIndex(ctx);
-                if (kanalIndex[0] >= 0)
-                {
-                    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
-                    {
-                        bool found = false;
-                        for (int a = 0; a < members.Count; a++)
-                        {
-                            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
-                            {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found)
-                        {
-                            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
-                        }
-                    }
-                }
-                for (int i = 0; i < temp.Count; i++)
-                {
-                    if (!members.Contains(temp[i].Value))
-                    {
-                        members.Add(temp[i].Value);
-                    }
-                }
-                int membersModified = 0;
-                int membersNotAbleToModify = 0;
-                for (int i = 0; i < members.Count; i++)
+                if (!bot.stopAll)
                 {
                     try
                     {
-                        await members[i].ModifyAsync(u => u.Nickname = name);
-                        membersModified++;
+                        List<DiscordMember> members = new List<DiscordMember>();
+                        //List<DiscordMember> temp = ctx.Guild.Members.Values.ToList();
+                        //var guildStuff = ctx.Guild.GetAllMembersAsync();
+
+                        //temp.AddRange(guildStuff.Result.ToList());
+                        //DiscordMemberConverter converter = new DiscordMemberConverter();
+                        int[] kanalIndex = ChannelIndex(ctx);
+                        if (kanalIndex[0] >= 0)
+                        {
+                            for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                            {
+                                members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                            }
+                            //    //for (int i = 0; i < temp.Count; i++)
+                            //    //{
+                            //    //    if (!kanalerna[kanalIndex[0]].discordUsers.Any(a => a.user == temp[i].Id))
+                            //    //    {
+                            //    //        kanalerna[kanalIndex[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                            //    //    }
+                            //    //}
+                            //    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                            //    {
+                            //        bool found = false;
+                            //        for (int a = 0; a < members.Count; a++)
+                            //        {
+                            //            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
+                            //            {
+                            //                found = true;
+                            //                break;
+                            //            }
+                            //        }
+                            //        if (!found)
+                            //        {
+                            //            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                            //        }
+                            //    }
+                            //}
+                            //for (int i = 0; i < temp.Count; i++)
+                            //{
+                            //    if (!members.Contains(temp[i]))
+                            //    {
+                            //        members.Add(temp[i]);
+                            //    }
+                        }
+                        int membersModified = 0;
+                        int membersNotAbleToModify = 0;
+                        for (int i = 0; i < members.Count; i++)
+                        {
+                            try
+                            {
+                                await members[i].ModifyAsync(u => u.Nickname = name);
+                                membersModified++;
+                            }
+                            catch (Exception e)
+                            {
+                                await WriteLine("Försökte ändra smeknamn: " + e.Message + " på " + members[i].Username, ctx);
+                                membersNotAbleToModify++;
+                            }
+                        }
+                        if (membersNotAbleToModify > 0)
+                        {
+                            await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".").ConfigureAwait(false);
+                        }
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Försökte ändra smeknamn: " + e.Message, ctx);
-                        membersNotAbleToModify++;
+                        await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                        ;
                     }
-                }
-                if (membersNotAbleToModify > 0)
-                {
-                    await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false);
                 }
                 else
                 {
-                    await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("bot shutting down.").ConfigureAwait(false);
                 }
             }
 
@@ -2623,13 +2745,22 @@ namespace DiscordBot
         private class ChannelSaveData
         {
             public ulong discordChannel;
+            public bool finished = false;
             public DiscordChannel realDiscordChannel;
             public List<DiscordMemberSaveData> discordUsers = new List<DiscordMemberSaveData>();
+            public string[] membersToAdd;
 
             public ChannelSaveData(DiscordChannel _discordChannel)
             {
                 realDiscordChannel = _discordChannel;
                 discordChannel = realDiscordChannel.Id;
+                finished = true;
+            }
+
+            public ChannelSaveData(ulong _discordChannel)
+            {
+                discordChannel = _discordChannel;
+                finished = false;
             }
         }
 
