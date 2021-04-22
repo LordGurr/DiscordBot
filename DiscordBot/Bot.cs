@@ -320,16 +320,29 @@ namespace DiscordBot
             string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
             for (int i = 0; i < tempArray.Length - 1; i++)
             {
-                string[] members = File.ReadAllLines(tempArray[i]);
+                try
+                {
+                    string[] members = File.ReadAllLines(tempArray[i]);
+                    kanalerna.Add(new ChannelSaveData(Convert.ToUInt64(tempArray[i].Replace(".txt", ""))));
+                    var g = Client.GetChannelAsync(kanalerna[kanalerna.Count - 1].discordChannel);
+                    kanalerna[kanalerna.Count - 1].realDiscordChannel = g.Result;
+                    kanalerna[kanalerna.Count - 1].membersToAdd = members;
 
-                //kanalerna.Add(Load(tempArray[i]));
-                //kanalerna.Add(Convert.ChangeType(channel[0], (TypeCode)ChannelSaveData));
-
-                kanalerna.Add(new ChannelSaveData(Convert.ToUInt64(tempArray[i].Replace(".txt", ""))));
-                kanalerna[kanalerna.Count - 1].membersToAdd = members;
-                //Type objType = typeof(DiscordMember);
-                //Type type = Type.GetType(objType.AssemblyQualifiedName);
-                //DiscordMember instance = (DiscordMember)Activator.CreateInstance(type);
+                    //for (int a = 0; a < kanalerna[kanalerna.Count - 1].membersToAdd.Length; a++)
+                    //{
+                    //    var getMem = kanalerna[kanalerna.Count - 1].realDiscordChannel.Guild.GetMemberAsync(Convert.ToUInt64(kanalerna[kanalerna.Count - 1].membersToAdd[a]));
+                    //    if (!kanalerna[kanalerna.Count - 1].discordUsers.Any(o => o.user == getMem.Result.Id))
+                    //    {
+                    //        kanalerna[kanalerna.Count - 1].discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                    //    }
+                    //}
+                    //kanalerna[kanalerna.Count - 1].membersToAdd = new string[kanalerna[kanalerna.Count - 1].membersToAdd.Length];
+                    //kanalerna[kanalerna.Count - 1].finished = true;
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                }
             }
         }
 
@@ -457,7 +470,7 @@ namespace DiscordBot
                    await e.Message.RespondAsync("That's not cool.").ConfigureAwait(false);
                else if (e.MentionedUsers.Count == 1 && e.MentionedUsers[0].Username == Client.CurrentApplication.Name && !e.Message.Content.StartsWith("?"))
                {
-                   await e.Message.RespondAsync("You called...").ConfigureAwait(false);
+                   await e.Message.RespondAsync("You called...\nSkriv ?help för att se vad jag kan göra.").ConfigureAwait(false);
                }
                else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!"))
                    await e.Message.RespondAsync("Hej " + e.Author.Username + "...").ConfigureAwait(false);
@@ -1000,6 +1013,7 @@ namespace DiscordBot
                 }
             }
 
+            //Lägger till fler brackets för att fixa koden }}}}
             [DSharpPlus.CommandsNext.Attributes.Command("system")]
             [DSharpPlus.CommandsNext.Attributes.Description("Returns system info.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -1207,6 +1221,23 @@ namespace DiscordBot
                 if (ctx.Channel.Id != bot.commandLine.Id)
                 {
                     await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.", ctx);
+                }
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("savemembers")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task SaveAllmembers(CommandContext ctx)
+            {
+                await bot.SaveMembers();
+                if (ctx.Channel.Id != bot.commandLine.Id)
+                {
+                    int members = 0;
+                    for (int i = 0; i < kanalerna.Count; i++)
+                    {
+                        members += kanalerna[i].discordUsers.Count;
+                    }
+                    await WriteLine("Har läst in " + kanalerna.Count + " kanaler och " + members + " medlemmar", ctx);
                 }
             }
 
@@ -1968,7 +1999,7 @@ namespace DiscordBot
                                 }
                             }
 
-                            if ((double)sendCode.Length / 2000.0 > 1.0)
+                            if ((double)sendCode.Length / 1880 > 1.0)
                             {
                                 double result = Math.Ceiling((double)sendCode.Length / 2048.0);
                                 int size = (int)((double)sendCode.Length / result);
