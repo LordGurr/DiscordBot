@@ -56,7 +56,8 @@ namespace DiscordBot
 
         public const string tempImagePng = "screenshotTemp.png";
 
-        private string[] channelsToAdd;
+        public List<DateTime> queuedRemindMes = new List<DateTime>();
+
         //public VoiceNextExtension Voice { get; set; } //To play music
 
         private async Task WriteLine(string str)
@@ -134,16 +135,16 @@ namespace DiscordBot
                         .WithFiles(new Dictionary<string, Stream>() { { path, fs } })
                         .SendAsync(channel);
                 }
-                if (channel != commandLine)
-                {
-                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                    {
-                        var msg = await new DiscordMessageBuilder()
-                            //.WithContent("Here is a really dumb file that I am testing with.")
-                            .WithFiles(new Dictionary<string, Stream>() { { path, fs } })
-                            .SendAsync(commandLine);
-                    }
-                }
+                //if (channel != commandLine)
+                //{
+                //    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                //    {
+                //        var msg = await new DiscordMessageBuilder()
+                //            //.WithContent("Here is a really dumb file that I am testing with.")
+                //            .WithFiles(new Dictionary<string, Stream>() { { path, fs } })
+                //            .SendAsync(commandLine);
+                //    }
+                //}
                 //await WriteLine("Uppladdat: " + path + " till kanalen: " + channel.Name + ".", channel);
             }
             catch (Exception e)
@@ -346,7 +347,7 @@ namespace DiscordBot
             }
         }
 
-        private async Task AddMembers(MessageCreateEventArgs e)
+        private void AddMembers(MessageCreateEventArgs e)
         {
             if (e.Channel.Name != null)
             {
@@ -362,56 +363,81 @@ namespace DiscordBot
                     {
                         kanalerna[channel[0]].realDiscordChannel = e.Channel;
                     }
-                    List<DiscordMember> temp = e.Message.Channel.Users.ToList();
-                    List<int> indexesFound = new List<int>();
-                    for (int i = 0; i < temp.Count; i++)
-                    {
-                        for (int a = 0; a < kanalerna[channel[0]].discordUsers.Count; a++)
-                        {
-                            if (kanalerna[channel[0]].discordUsers[a].member == temp[i])
-                            {
-                                indexesFound.Add(i);
-                            }
-                        }
-                    }
-                    for (int i = 0; i < temp.Count; i++)
-                    {
-                        if (!indexesFound.Contains(i))
-                        {
-                            kanalerna[channel[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
-                        }
-                    }
-                }
-                List<DiscordChannel> channels = e.Guild.Channels.Values.ToList();
-                for (int i = 0; i < channels.Count; i++)
-                {
-                    ChannelSaveData curChannel = kanalerna.Find(a => a.discordChannel == channels[i].Id);
 
-                    if (curChannel != null)
+                    //List<DiscordMember> temp = e.Message.Channel.Users.ToList();
+                    //List<int> indexesFound = new List<int>();
+                    //for (int i = 0; i < temp.Count; i++)
+                    //{
+                    //    for (int a = 0; a < kanalerna[channel[0]].discordUsers.Count; a++)
+                    //    {
+                    //        if (kanalerna[channel[0]].discordUsers[a].member == temp[i])
+                    //        {
+                    //            indexesFound.Add(i);
+                    //        }
+                    //    }
+                    //}
+                    //for (int i = 0; i < temp.Count; i++)
+                    //{
+                    //    if (!indexesFound.Contains(i))
+                    //    {
+                    //        kanalerna[channel[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                    //    }
+                    //}
+
+                    //List<DiscordChannel> channels = e.Guild.Channels.Values.ToList();
+                    //for (int i = 0; i < channels.Count; i++)
+                    //{
+                    //    ChannelSaveData curChannel = kanalerna.Find(a => a.discordChannel == channels[i].Id);
+
+                    //    if (curChannel != null)
+                    //    {
+                    //        List<DiscordMember> curUsers = channels[i].Users.ToList();
+                    //        for (int a = 0; a < curUsers.Count; a++)
+                    //        {
+                    //            if (!curChannel.discordUsers.Any(o => o.user == curUsers[a].Id))
+                    //            {
+                    //                curChannel.discordUsers.Add(new DiscordMemberSaveData(curUsers[a]));
+                    //            }
+                    //        }
+                    //        if (!curChannel.finished)
+                    //        {
+                    //            for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                    //            {
+                    //                var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                    //                if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                    //                {
+                    //                    curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                    //                }
+                    //            }
+                    //            curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                    //            curChannel.finished = true;
+                    //            break;
+                    //        }
+                    //    }
+                    //}
+                }
+            }
+        }
+
+        private void LoadChannels(MessageCreateEventArgs e)
+        {
+            for (int i = 0; i < kanalerna.Count; i++)
+            {
+                ChannelSaveData curChannel = kanalerna[i];
+
+                if (!curChannel.finished)
+                {
+                    for (int a = 0; a < curChannel.membersToAdd.Length; a++)
                     {
-                        List<DiscordMember> curUsers = channels[i].Users.ToList();
-                        for (int a = 0; a < curUsers.Count; a++)
+                        var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                        if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
                         {
-                            if (!curChannel.discordUsers.Any(o => o.user == curUsers[a].Id))
-                            {
-                                curChannel.discordUsers.Add(new DiscordMemberSaveData(curUsers[a]));
-                            }
-                        }
-                        if (!curChannel.finished)
-                        {
-                            for (int a = 0; a < curChannel.membersToAdd.Length; a++)
-                            {
-                                var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
-                                if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
-                                {
-                                    curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
-                                }
-                            }
-                            curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
-                            curChannel.finished = true;
-                            break;
+                            curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
                         }
                     }
+                    curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                    curChannel.finished = true;
+                    break;
                 }
             }
         }
@@ -456,7 +482,7 @@ namespace DiscordBot
                {
                    if (!stopAll)
                    {
-                       await AddMembers(e);
+                       AddMembers(e);
                    }
                }
                catch (Exception ex)
@@ -1263,18 +1289,6 @@ namespace DiscordBot
                 SendString = string.Empty;
             }
 
-            private int TotalCommits(string url)
-            {
-                try
-                {
-                    return 0;
-                }
-                catch (Exception e)
-                {
-                    return 0;
-                }
-            }
-
             [DSharpPlus.CommandsNext.Attributes.Command("savebotcoin")]
             [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -1288,7 +1302,7 @@ namespace DiscordBot
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("savemembers")]
-            [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Saves members and channels users.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task SaveAllmembers(CommandContext ctx)
             {
@@ -1301,6 +1315,47 @@ namespace DiscordBot
                         members += kanalerna[i].discordUsers.Count;
                     }
                     await WriteLine("Har läst in " + kanalerna.Count + " kanaler och " + members + " medlemmar", ctx);
+                }
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("pendingremind")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Returns the pending remindmes.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task PendingRemind(CommandContext ctx)
+            {
+                SendString = string.Empty;
+                for (int i = 0; i < bot.queuedRemindMes.Count; i++)
+                {
+                    await WriteLine(bot.queuedRemindMes[i].ToShortTimeString() + "\n");
+                }
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Queued remindmes",
+                    Description = SendString,
+                });
+                SendString = string.Empty;
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("directmessage")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Messages fucking everyone.")]
+            [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+            public async Task PendingRemind(CommandContext ctx, [RemainingText] string str)
+            {
+                List<DiscordMember> membersToSpam = new List<DiscordMember>();
+                for (int i = 0; i < kanalerna.Count; i++)
+                {
+                    for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                    {
+                        if (!membersToSpam.Contains(kanalerna[i].discordUsers[a].member))
+                        {
+                            membersToSpam.Add(kanalerna[i].discordUsers[a].member);
+                        }
+                    }
+                }
+                for (int i = 0; i < membersToSpam.Count; i++)
+                {
+                    var c = membersToSpam[i].CreateDmChannelAsync();
+                    await c.Result.SendMessageAsync(str);
                 }
             }
 
@@ -1606,14 +1661,14 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.Aliases("aktivitet")]
             [DSharpPlus.CommandsNext.Attributes.Description("Sets game bot is playing.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-            public async Task Activity(CommandContext ctx, int activityType, params string[] inputs)
+            public async Task Activity(CommandContext ctx, int activityType, [RemainingText] string input)
             {
-                string input = "";
-                // Real Shit
-                for (int i = 0; i < inputs.Length; i++)
-                {
-                    input += inputs[i] + " ";
-                }
+                //string input = "";
+                //// Real Shit
+                //for (int i = 0; i < inputs.Length; i++)
+                //{
+                //    input += inputs[i] + " ";
+                //}
                 var activity = new DiscordActivity
                 {
                     Name = input,
@@ -1796,40 +1851,57 @@ namespace DiscordBot
             {
                 DateTime current = DateTime.Now;
                 DateTime remindTime = DateTime.Now;
-                if (measurement.ToLower() == "minutes" || measurement.ToLower() == "minute" || measurement.ToLower() == "minut" || measurement.ToLower() == "minuter")
+                try
                 {
-                    remindTime = remindTime.AddMinutes(time);
+                    if (measurement.ToLower() == "minutes" || measurement.ToLower() == "minute" || measurement.ToLower() == "minut" || measurement.ToLower() == "minuter")
+                    {
+                        remindTime = remindTime.AddMinutes(time);
+                    }
+                    else if (measurement.ToLower() == "hours" || measurement.ToLower() == "hour" || measurement.ToLower() == "timme" || measurement.ToLower() == "timmar")
+                    {
+                        remindTime = remindTime.AddHours(time);
+                    }
+                    else if (measurement.ToLower() == "seconds" || measurement.ToLower() == "second" || measurement.ToLower() == "sekund" || measurement.ToLower() == "sekunder")
+                    {
+                        remindTime = remindTime.AddSeconds(time);
+                    }
+                    else
+                    {
+                        await ctx.Channel.SendMessageAsync("You inputted the time measurement wrong.").ConfigureAwait(false);
+                        return;
+                    }
+                    TimeSpan timeSpan = remindTime - current;
+                    await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
+                    bot.queuedRemindMes.Add(remindTime);
+                    await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
+                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    if (index >= 0)
+                    {
+                        bot.queuedRemindMes.RemoveAt(index);
+                    }
+                    string temp = "";
+                    for (int i = 0; i < message.Length; i++)
+                    {
+                        temp += message[i] + " ";
+                    }
+                    if (temp != " " && temp != "")
+                    {
+                        await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now. Your message: " + temp + ".").ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now.").ConfigureAwait(false);
+                    }
                 }
-                else if (measurement.ToLower() == "hours" || measurement.ToLower() == "hour" || measurement.ToLower() == "timme" || measurement.ToLower() == "timmar")
+                catch (Exception e)
                 {
-                    remindTime = remindTime.AddHours(time);
+                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    if (index >= 0)
+                    {
+                        bot.queuedRemindMes.RemoveAt(index);
+                    }
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
                 }
-                else if (measurement.ToLower() == "seconds" || measurement.ToLower() == "second" || measurement.ToLower() == "sekund" || measurement.ToLower() == "sekunder")
-                {
-                    remindTime = remindTime.AddSeconds(time);
-                }
-                else
-                {
-                    await ctx.Channel.SendMessageAsync("You inputted the time measurement wrong.").ConfigureAwait(false);
-                    return;
-                }
-                TimeSpan timeSpan = remindTime - current;
-                await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
-                await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
-                string temp = "";
-                for (int i = 0; i < message.Length; i++)
-                {
-                    temp += message[i] + " ";
-                }
-                if (temp != " " && temp != "")
-                {
-                    await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now. Your message: " + temp + ".").ConfigureAwait(false);
-                }
-                else
-                {
-                    await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now.").ConfigureAwait(false);
-                }
-
                 GiveBotCoin(ctx);
             }
 
@@ -1839,27 +1911,45 @@ namespace DiscordBot
             {
                 DateTime current = DateTime.Now;
                 DateTime remindTime = DateTime.Now;
-                if (measurement.ToLower() == "minutes" || measurement.ToLower() == "minute" || measurement.ToLower() == "minut" || measurement.ToLower() == "minuter")
+                try
                 {
-                    remindTime = remindTime.AddMinutes(time);
+                    if (measurement.ToLower() == "minutes" || measurement.ToLower() == "minute" || measurement.ToLower() == "minut" || measurement.ToLower() == "minuter")
+                    {
+                        remindTime = remindTime.AddMinutes(time);
+                    }
+                    else if (measurement.ToLower() == "hours" || measurement.ToLower() == "hour" || measurement.ToLower() == "timme" || measurement.ToLower() == "timmar")
+                    {
+                        remindTime = remindTime.AddHours(time);
+                    }
+                    else if (measurement.ToLower() == "seconds" || measurement.ToLower() == "second" || measurement.ToLower() == "sekund" || measurement.ToLower() == "sekunder")
+                    {
+                        remindTime = remindTime.AddSeconds(time);
+                    }
+                    else
+                    {
+                        await ctx.Channel.SendMessageAsync("You inputted the time measurement wrong.").ConfigureAwait(false);
+                        return;
+                    }
+                    TimeSpan timeSpan = remindTime - current;
+                    await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
+                    bot.queuedRemindMes.Add(remindTime);
+                    await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
+                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    if (index >= 0)
+                    {
+                        bot.queuedRemindMes.RemoveAt(index);
+                    }
+                    await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now.").ConfigureAwait(false);
                 }
-                else if (measurement.ToLower() == "hours" || measurement.ToLower() == "hour" || measurement.ToLower() == "timme" || measurement.ToLower() == "timmar")
+                catch (Exception e)
                 {
-                    remindTime = remindTime.AddHours(time);
+                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    if (index >= 0)
+                    {
+                        bot.queuedRemindMes.RemoveAt(index);
+                    }
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
                 }
-                else if (measurement.ToLower() == "seconds" || measurement.ToLower() == "second" || measurement.ToLower() == "sekund" || measurement.ToLower() == "sekunder")
-                {
-                    remindTime = remindTime.AddSeconds(time);
-                }
-                else
-                {
-                    await ctx.Channel.SendMessageAsync("You inputted the time measurement wrong.").ConfigureAwait(false);
-                    return;
-                }
-                TimeSpan timeSpan = remindTime - current;
-                await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
-                await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
-                await ctx.Channel.SendMessageAsync(ctx.User.Mention + " You told me to remind you now.").ConfigureAwait(false);
                 GiveBotCoin(ctx);
             }
 
