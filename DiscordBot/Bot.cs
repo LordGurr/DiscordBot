@@ -682,7 +682,14 @@ namespace DiscordBot
             {
                 for (int i = 0; i < botCoinSaves.Count; i++)
                 {
-                    tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
+                    if (botCoinSaves[i].userName == null)
+                    {
+                        tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
+                    }
+                    else
+                    {
+                        tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()) + " " + botCoinSaves[i].userName);
+                    }
                 }
             }
             await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.");
@@ -705,6 +712,14 @@ namespace DiscordBot
                         DateTime senastTjänadePeng = Convert.ToDateTime(temp[2] + " " + temp[3]);
                         botCoinSaves.Add(new BotCoinSaveData(name, antalBotCoin, senastTjänadePeng));
                     }
+                    else if (temp.Length == 5)
+                    {
+                        ulong name = (ulong)Convert.ToDecimal(temp[0]);
+                        int antalBotCoin = Convert.ToInt32(temp[1]);
+                        DateTime senastTjänadePeng = Convert.ToDateTime(temp[2] + " " + temp[3]);
+                        string userName = temp[4];
+                        botCoinSaves.Add(new BotCoinSaveData(name, antalBotCoin, senastTjänadePeng, userName));
+                    }
                 }
             }
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
@@ -715,6 +730,10 @@ namespace DiscordBot
             int i = BotCoinIndex(ctx);
             if (i > -1)
             {
+                if (botCoinSaves[i].userName == null)
+                {
+                    botCoinSaves[i].userName = ctx.Message.Author.Username;
+                }
                 TimeSpan timeSpan = DateTime.Now - botCoinSaves[i].senastTjänadePeng;
                 if (timeSpan.TotalMinutes > 1)
                 {
@@ -1870,11 +1889,51 @@ namespace DiscordBot
                 int i = BotCoinIndex(ctx);
                 if (i > -1)
                 {
+                    if (botCoinSaves[i].userName == null)
+                    {
+                        botCoinSaves[i].userName = ctx.Message.Author.Username;
+                    }
                     await ctx.Channel.SendMessageAsync("Du är redan uppskriven för botcoin och har " + botCoinSaves[i].antalBotCoin + " botcoins.").ConfigureAwait(false);
                     return;
                 }
-                botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5)));
+                botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
                 await ctx.Channel.SendMessageAsync("Du är nu uppskriven för botcoin och har: " + botCoinSaves[botCoinSaves.Count - 1].antalBotCoin + " botcoins.").ConfigureAwait(false);
+            }
+
+            [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("leadeboard", "botcoinleader", "botcoinboard")]
+            [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+            public async Task BotCoinLeaderBoard(CommandContext ctx)
+            {
+                int i = BotCoinIndex(ctx);
+                if (i > -1)
+                {
+                    if (botCoinSaves[i].userName == null)
+                    {
+                        botCoinSaves[i].userName = ctx.Message.Author.Username;
+                    }
+                }
+                List<BotCoinSaveData> temp = new List<BotCoinSaveData>();
+                temp.InsertRange(0, botCoinSaves);
+                temp.OrderBy(a => a.antalBotCoin);
+                SendString = string.Empty;
+                for (int a = 0; a < temp.Count; a++)
+                {
+                    if (botCoinSaves[a].userName == null)
+                    {
+                        await WriteLine("Botcoin: " + temp[a].antalBotCoin + " ");
+                    }
+                    else
+                    {
+                        await WriteLine("Botcoin: " + temp[a].antalBotCoin + " " + temp[a].userName);
+                    }
+                }
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Leaderboard",
+                    Description = SendString,
+                });
+                SendString = string.Empty;
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("remindme")]
@@ -2977,6 +3036,15 @@ namespace DiscordBot
             public ulong user;
             public int antalBotCoin;
             public DateTime senastTjänadePeng;
+            public string userName;
+
+            public BotCoinSaveData(ulong _user, int _antalBotCoin, DateTime _senastTjänadePeng, string name)
+            {
+                user = _user;
+                antalBotCoin = _antalBotCoin;
+                senastTjänadePeng = _senastTjänadePeng;
+                userName = name;
+            }
 
             public BotCoinSaveData(ulong _user, int _antalBotCoin, DateTime _senastTjänadePeng)
             {
