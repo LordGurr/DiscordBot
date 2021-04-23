@@ -22,6 +22,7 @@ using System.Net.Http;
 using DSharpPlus.CommandsNext.Converters;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
+using System.Threading;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -419,33 +420,52 @@ namespace DiscordBot
             }
         }
 
+        private bool isAdding = false;
+
         private void LoadChannels(MessageCreateEventArgs e)
         {
-            for (int i = 0; i < kanalerna.Count; i++)
+            if (!isAdding)
             {
-                ChannelSaveData curChannel = kanalerna[i];
-                List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
-                if (!curChannel.finished && theChannels.Any(a => a.Id == curChannel.discordChannel))
+                isAdding = true;
+                try
                 {
-                    try
+                    for (int i = 0; i < kanalerna.Count; i++)
                     {
-                        for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                        ChannelSaveData curChannel = kanalerna[i];
+                        List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
+                        if (!curChannel.finished && theChannels.Any(a => a.Id == curChannel.discordChannel))
                         {
-                            var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
-                            if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                            try
                             {
-                                curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                                for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                                {
+                                    var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                                    if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                                    {
+                                        curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                                    }
+                                }
+                                curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                                curChannel.finished = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                WriteLine(ex.Message);
                             }
                         }
-                        curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
-                        curChannel.finished = true;
                     }
-                    catch (Exception ex)
-                    {
-                        WriteLine(ex.Message);
-                    }
+                    isAdding = false;
+                }
+                catch (Exception ex)
+                {
+                    isAdding = false;
+                    WriteLine(ex.Message);
                 }
             }
+        }
+
+        public void Test()
+        {
         }
 
         public async Task RunAsync()
@@ -489,9 +509,10 @@ namespace DiscordBot
                    if (!stopAll)
                    {
                        AddMembers(e);
-                       if (!kanalerna.All(a => a.finished))
+                       if (!kanalerna.All(a => a.finished) && !isAdding)
                        {
-                           LoadChannels(e);
+                           Thread t = new Thread(() => LoadChannels(e));
+                           t.Start();
                        }
                    }
                }
@@ -2263,48 +2284,66 @@ namespace DiscordBot
                         try
                         {
                             List<DiscordMember> members = new List<DiscordMember>();
-                            //List<DiscordMember> temp = ctx.Guild.Members.Values.ToList();
-                            //var guildStuff = ctx.Guild.GetAllMembersAsync();
-
-                            //temp.AddRange(guildStuff.Result.ToList());
-                            //DiscordMemberConverter converter = new DiscordMemberConverter();
-                            int[] kanalIndex = ChannelIndex(ctx);
-                            if (kanalIndex[0] >= 0)
+                            if (ctx.Message.MentionedUsers.Count > 0)
                             {
-                                for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                var ids = ctx.Message.MentionedUsers.ToList();
+                                int[] kanalIndex = ChannelIndex(ctx);
+                                if (kanalIndex[0] >= 0)
                                 {
-                                    members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                    {
+                                        if (ids.Any(a => a.Id == kanalerna[kanalIndex[0]].discordUsers[i].user))
+                                        {
+                                            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                        }
+                                    }
                                 }
-                                //    //for (int i = 0; i < temp.Count; i++)
-                                //    //{
-                                //    //    if (!kanalerna[kanalIndex[0]].discordUsers.Any(a => a.user == temp[i].Id))
-                                //    //    {
-                                //    //        kanalerna[kanalIndex[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
-                                //    //    }
-                                //    //}
-                                //    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
-                                //    {
-                                //        bool found = false;
-                                //        for (int a = 0; a < members.Count; a++)
-                                //        {
-                                //            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
-                                //            {
-                                //                found = true;
-                                //                break;
-                                //            }
-                                //        }
-                                //        if (!found)
-                                //        {
-                                //            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
-                                //        }
-                                //    }
-                                //}
-                                //for (int i = 0; i < temp.Count; i++)
-                                //{
-                                //    if (!members.Contains(temp[i]))
-                                //    {
-                                //        members.Add(temp[i]);
-                                //    }
+                            }
+                            else
+                            {
+                                //List<DiscordMember> temp = ctx.Guild.Members.Values.ToList();
+                                //var guildStuff = ctx.Guild.GetAllMembersAsync();
+
+                                //temp.AddRange(guildStuff.Result.ToList());
+                                //DiscordMemberConverter converter = new DiscordMemberConverter();
+                                int[] kanalIndex = ChannelIndex(ctx);
+                                if (kanalIndex[0] >= 0)
+                                {
+                                    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                    {
+                                        members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                    }
+                                    //    //for (int i = 0; i < temp.Count; i++)
+                                    //    //{
+                                    //    //    if (!kanalerna[kanalIndex[0]].discordUsers.Any(a => a.user == temp[i].Id))
+                                    //    //    {
+                                    //    //        kanalerna[kanalIndex[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                                    //    //    }
+                                    //    //}
+                                    //    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                    //    {
+                                    //        bool found = false;
+                                    //        for (int a = 0; a < members.Count; a++)
+                                    //        {
+                                    //            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
+                                    //            {
+                                    //                found = true;
+                                    //                break;
+                                    //            }
+                                    //        }
+                                    //        if (!found)
+                                    //        {
+                                    //            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                    //        }
+                                    //    }
+                                    //}
+                                    //for (int i = 0; i < temp.Count; i++)
+                                    //{
+                                    //    if (!members.Contains(temp[i]))
+                                    //    {
+                                    //        members.Add(temp[i]);
+                                    //    }
+                                }
                             }
                             int membersModified = 0;
                             int membersNotAbleToModify = 0;
