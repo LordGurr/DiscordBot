@@ -702,7 +702,9 @@ namespace DiscordBot
 
             for (int i = 0; i < tempArray.Length; i++)
             {
-                if (IsDigitsOnly(tempArray[i], ":-"))
+                //if (IsDigitsOnly(tempArray[i], ":-"))
+                //{
+                try
                 {
                     string[] temp = tempArray[i].Split(" ");
                     if (temp.Length == 4)
@@ -721,6 +723,11 @@ namespace DiscordBot
                         botCoinSaves.Add(new BotCoinSaveData(name, antalBotCoin, senastTjänadePeng, userName));
                     }
                 }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                }
+                //}
             }
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
         }
@@ -1901,7 +1908,7 @@ namespace DiscordBot
             }
 
             [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
-            [DSharpPlus.CommandsNext.Attributes.Aliases("leadeboard", "botcoinleader", "botcoinboard")]
+            [DSharpPlus.CommandsNext.Attributes.Aliases("leaderboard", "botcoinleader", "botcoinboard")]
             [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
             public async Task BotCoinLeaderBoard(CommandContext ctx)
             {
@@ -1915,11 +1922,12 @@ namespace DiscordBot
                 }
                 List<BotCoinSaveData> temp = new List<BotCoinSaveData>();
                 temp.InsertRange(0, botCoinSaves);
-                temp.OrderBy(a => a.antalBotCoin);
+                temp = temp.OrderBy(a => a.antalBotCoin).ToList();
+                temp.Reverse();
                 SendString = string.Empty;
                 for (int a = 0; a < temp.Count; a++)
                 {
-                    if (botCoinSaves[a].userName == null)
+                    if (temp[a].userName == null)
                     {
                         await WriteLine("Botcoin: " + temp[a].antalBotCoin + " ");
                     }
