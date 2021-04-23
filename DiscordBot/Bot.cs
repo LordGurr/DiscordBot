@@ -424,20 +424,26 @@ namespace DiscordBot
             for (int i = 0; i < kanalerna.Count; i++)
             {
                 ChannelSaveData curChannel = kanalerna[i];
-
-                if (!curChannel.finished)
+                List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
+                if (!curChannel.finished && theChannels.Any(a => a.Id == curChannel.discordChannel))
                 {
-                    for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                    try
                     {
-                        var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
-                        if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                        for (int a = 0; a < curChannel.membersToAdd.Length; a++)
                         {
-                            curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                            var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                            if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                            {
+                                curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                            }
                         }
+                        curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                        curChannel.finished = true;
                     }
-                    curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
-                    curChannel.finished = true;
-                    break;
+                    catch (Exception ex)
+                    {
+                        WriteLine(ex.Message);
+                    }
                 }
             }
         }
@@ -483,6 +489,10 @@ namespace DiscordBot
                    if (!stopAll)
                    {
                        AddMembers(e);
+                       if (!kanalerna.All(a => a.finished))
+                       {
+                           LoadChannels(e);
+                       }
                    }
                }
                catch (Exception ex)
@@ -1551,9 +1561,10 @@ namespace DiscordBot
                     await Client.DisconnectAsync();
                     await Task.Delay(500);
                     await SaveAllbotcoin(ctx);
-                    await bot.SaveMembers();
+                    await SaveAllmembers(ctx);
                     await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                     Client.Dispose();
+                    await Task.Delay(500);
                     Environment.Exit(0);
                 }
                 else
@@ -2213,6 +2224,8 @@ namespace DiscordBot
                 }
             }
 
+            private bool döperOm = false;
+
             //Lägger till fler brackets för att fixa koden }}
             [DSharpPlus.CommandsNext.Attributes.Command("nickname")]
             [DSharpPlus.CommandsNext.Attributes.Description("Döper om alla på servern.")]
@@ -2244,80 +2257,89 @@ namespace DiscordBot
                 }
                 if (!bot.stopAll)
                 {
-                    try
+                    if (!döperOm)
                     {
-                        List<DiscordMember> members = new List<DiscordMember>();
-                        //List<DiscordMember> temp = ctx.Guild.Members.Values.ToList();
-                        //var guildStuff = ctx.Guild.GetAllMembersAsync();
+                        döperOm = true;
+                        try
+                        {
+                            List<DiscordMember> members = new List<DiscordMember>();
+                            //List<DiscordMember> temp = ctx.Guild.Members.Values.ToList();
+                            //var guildStuff = ctx.Guild.GetAllMembersAsync();
 
-                        //temp.AddRange(guildStuff.Result.ToList());
-                        //DiscordMemberConverter converter = new DiscordMemberConverter();
-                        int[] kanalIndex = ChannelIndex(ctx);
-                        if (kanalIndex[0] >= 0)
-                        {
-                            for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                            //temp.AddRange(guildStuff.Result.ToList());
+                            //DiscordMemberConverter converter = new DiscordMemberConverter();
+                            int[] kanalIndex = ChannelIndex(ctx);
+                            if (kanalIndex[0] >= 0)
                             {
-                                members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                {
+                                    members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                }
+                                //    //for (int i = 0; i < temp.Count; i++)
+                                //    //{
+                                //    //    if (!kanalerna[kanalIndex[0]].discordUsers.Any(a => a.user == temp[i].Id))
+                                //    //    {
+                                //    //        kanalerna[kanalIndex[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
+                                //    //    }
+                                //    //}
+                                //    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
+                                //    {
+                                //        bool found = false;
+                                //        for (int a = 0; a < members.Count; a++)
+                                //        {
+                                //            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
+                                //            {
+                                //                found = true;
+                                //                break;
+                                //            }
+                                //        }
+                                //        if (!found)
+                                //        {
+                                //            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
+                                //        }
+                                //    }
+                                //}
+                                //for (int i = 0; i < temp.Count; i++)
+                                //{
+                                //    if (!members.Contains(temp[i]))
+                                //    {
+                                //        members.Add(temp[i]);
+                                //    }
                             }
-                            //    //for (int i = 0; i < temp.Count; i++)
-                            //    //{
-                            //    //    if (!kanalerna[kanalIndex[0]].discordUsers.Any(a => a.user == temp[i].Id))
-                            //    //    {
-                            //    //        kanalerna[kanalIndex[0]].discordUsers.Add(new DiscordMemberSaveData(temp[i]));
-                            //    //    }
-                            //    //}
-                            //    for (int i = 0; i < kanalerna[kanalIndex[0]].discordUsers.Count; i++)
-                            //    {
-                            //        bool found = false;
-                            //        for (int a = 0; a < members.Count; a++)
-                            //        {
-                            //            if (members[a] == kanalerna[kanalIndex[0]].discordUsers[i].member)
-                            //            {
-                            //                found = true;
-                            //                break;
-                            //            }
-                            //        }
-                            //        if (!found)
-                            //        {
-                            //            members.Add(kanalerna[kanalIndex[0]].discordUsers[i].member);
-                            //        }
-                            //    }
-                            //}
-                            //for (int i = 0; i < temp.Count; i++)
-                            //{
-                            //    if (!members.Contains(temp[i]))
-                            //    {
-                            //        members.Add(temp[i]);
-                            //    }
-                        }
-                        int membersModified = 0;
-                        int membersNotAbleToModify = 0;
-                        for (int i = 0; i < members.Count; i++)
-                        {
-                            try
+                            int membersModified = 0;
+                            int membersNotAbleToModify = 0;
+                            for (int i = 0; i < members.Count; i++)
                             {
-                                await members[i].ModifyAsync(u => u.Nickname = name);
-                                membersModified++;
+                                try
+                                {
+                                    await members[i].ModifyAsync(u => u.Nickname = name);
+                                    membersModified++;
+                                }
+                                catch (Exception e)
+                                {
+                                    await WriteLine("Försökte ändra smeknamn: " + e.Message + " på " + members[i].Username, ctx);
+                                    membersNotAbleToModify++;
+                                }
                             }
-                            catch (Exception e)
+                            if (membersNotAbleToModify > 0)
                             {
-                                await WriteLine("Försökte ändra smeknamn: " + e.Message + " på " + members[i].Username, ctx);
-                                membersNotAbleToModify++;
+                                await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false);
                             }
+                            else
+                            {
+                                await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".").ConfigureAwait(false);
+                            }
+                            döperOm = false;
                         }
-                        if (membersNotAbleToModify > 0)
+                        catch (Exception e)
                         {
-                            await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".\n" + membersNotAbleToModify + " av medlammarna kunde inte döpas om.").ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            await ctx.Channel.SendMessageAsync(membersModified + " medlemmars smeknamn har ändrats till " + name + ".").ConfigureAwait(false);
+                            await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                            döperOm = false;
                         }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
-                        ;
+                        await ctx.Channel.SendMessageAsync("Döper redan om. Skicka senare.").ConfigureAwait(false);
                     }
                 }
                 else
