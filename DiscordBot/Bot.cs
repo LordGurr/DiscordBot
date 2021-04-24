@@ -454,6 +454,15 @@ namespace DiscordBot
                             }
                         }
                     }
+                    if (kanalerna.All(a => a.finished))
+                    {
+                        int members = 0;
+                        for (int i = 0; i < kanalerna.Count; i++)
+                        {
+                            members += kanalerna[i].discordUsers.Count;
+                        }
+                        WriteLine("Alla " + members + " medlemmar har blivt inlästa.");
+                    }
                     isAdding = false;
                 }
                 catch (Exception ex)
@@ -745,7 +754,7 @@ namespace DiscordBot
                 if (timeSpan.TotalMinutes > 1)
                 {
                     int max = Convert.ToInt32(Math.Clamp(timeSpan.TotalMinutes, 0, 15));
-                    int earnedCoins = Convert.ToInt32(Math.Floor(Math.Abs(rng.NextDouble() - rng.NextDouble()) * (1 + max - 0) + 0));
+                    int earnedCoins = Convert.ToInt32(Math.Floor(Math.Abs(rng.NextDouble() - rng.NextDouble()) * (1 + max - 0) + 2));
                     botCoinSaves[i].antalBotCoin += earnedCoins;
                     botCoinSaves[i].senastTjänadePeng = DateTime.Now;
                     return;
@@ -1396,7 +1405,7 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.Command("directmessage")]
             [DSharpPlus.CommandsNext.Attributes.Description("Messages fucking everyone.")]
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-            public async Task PendingRemind(CommandContext ctx, [RemainingText] string str)
+            public async Task DMa(CommandContext ctx, [RemainingText] string str)
             {
                 List<DiscordMember> membersToSpam = new List<DiscordMember>();
                 for (int i = 0; i < kanalerna.Count; i++)
