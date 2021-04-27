@@ -1099,14 +1099,15 @@ namespace DiscordBot
             public static Bot bot;
             private DateTime shutdownTime;
 
-            private string SendString = "";
+            //private string SendString = "";
 
-            private async Task WriteLine(string str)
+            private async Task<string> WriteLine(string str)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine(str);
                 Console.ForegroundColor = ConsoleColor.White;
                 SendString += "\n" + str;
+                return str;
             }
 
             private async Task WriteLine(string str, CommandContext ctx)
@@ -1156,27 +1157,27 @@ namespace DiscordBot
                             }
                             curMembers = curMembers.OrderBy(o => o.Hierarchy).ToList();
                             curMembers.Reverse();
-                            SendString = string.Empty;
+                            string SendString = string.Empty;
                             //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
                             if (kanalerna[index[0]].realDiscordChannel != null)
                             {
-                                await WriteLine(kanalerna[index[0]].realDiscordChannel.Name);
+                                SendString += WriteLine(kanalerna[index[0]].realDiscordChannel.Name);
                             }
                             else
                             {
-                                await WriteLine("kanal");
+                                SendString += WriteLine("kanal");
                             }
                             string title = SendString;
                             SendString = string.Empty;
                             if (kanalerna[index[0]].discordUsers.Count < 1)
                             {
-                                await WriteLine(kanalerna[index[0]].membersToAdd.Length + " medlemmar som kommer läggas till så fort någon skriver något");
+                                SendString += WriteLine(kanalerna[index[0]].membersToAdd.Length + " medlemmar som kommer läggas till så fort någon skriver något");
                             }
                             else
                             {
                                 for (int a = 0; a < curMembers.Count; a++)
                                 {
-                                    await WriteLine("medlem " + (a + 1) + ": " + curMembers[a].Username + ". rank: " + curMembers[a].Hierarchy);
+                                    SendString += WriteLine("medlem " + (a + 1) + ": " + curMembers[a].Username + ". rank: " + curMembers[a].Hierarchy);
                                     //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
                                 }
                             }
@@ -1209,27 +1210,27 @@ namespace DiscordBot
                     {
                         for (int i = 0; i < kanalerna.Count; i++)
                         {
-                            SendString = string.Empty;
+                            string SendString = string.Empty;
                             //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
                             if (kanalerna[i].realDiscordChannel != null)
                             {
-                                await WriteLine(kanalerna[i].realDiscordChannel.Name);
+                                SendString += WriteLine(kanalerna[i].realDiscordChannel.Name);
                             }
                             else
                             {
-                                await WriteLine("kanal " + (i + 1));
+                                SendString += WriteLine("kanal " + (i + 1));
                             }
                             string title = SendString;
                             SendString = string.Empty;
                             if (kanalerna[i].discordUsers.Count < 1)
                             {
-                                await WriteLine(kanalerna[i].membersToAdd.Length + " medlemmar som kommer läggas till så fort någon skriver något");
+                                SendString += WriteLine(kanalerna[i].membersToAdd.Length + " medlemmar som kommer läggas till så fort någon skriver något");
                             }
                             else
                             {
                                 for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
                                 {
-                                    await WriteLine("medlem " + (a + 1) + ": " + kanalerna[i].discordUsers[a].member.Username);
+                                    SendString += WriteLine("medlem " + (a + 1) + ": " + kanalerna[i].discordUsers[a].member.Username);
                                     //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
                                 }
                             }
@@ -1257,45 +1258,46 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task SystemInfo(CommandContext ctx)
             {
-                await WriteLine("Program namn: " + System.AppDomain.CurrentDomain.FriendlyName/*, ctx*/);
-                await WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
-                await WriteLine("D#+ version: " + Client.VersionString/*, ctx*/);
-                await WriteLine("Gateway version: " + Client.GatewayVersion/*, ctx*/);
-                await WriteLine("Windows version: " + Environment.OSVersion/*, ctx*/);
-                await WriteLine(".Net version: " + Environment.Version/*, ctx*/);
+                string SendString = string.Empty;
+                SendString += WriteLine("Program namn: " + System.AppDomain.CurrentDomain.FriendlyName/*, ctx*/);
+                SendString += WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
+                SendString += WriteLine("D#+ version: " + Client.VersionString/*, ctx*/);
+                SendString += WriteLine("Gateway version: " + Client.GatewayVersion/*, ctx*/);
+                SendString += WriteLine("Windows version: " + Environment.OSVersion/*, ctx*/);
+                SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
                 ScreenShootingShit screenShit = new ScreenShootingShit();
                 ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
                 for (int i = 0; i < displays.Count; i++)
                 {
-                    await WriteLine("Monitor " + (i + 1) + " har en upplösning på " + displays[i].ScreenWidth + " gånger " + displays[i].ScreenHeight + " pixlar"/*, ctx*/);
+                    SendString += WriteLine("Monitor " + (i + 1) + " har en upplösning på " + displays[i].ScreenWidth + " gånger " + displays[i].ScreenHeight + " pixlar"/*, ctx*/);
                 }
-                await WriteLine("Dator namn: " + Environment.MachineName/*, ctx*/);
-                await WriteLine("Användarnamn: " + Environment.UserName/*, ctx*/);
-                await WriteLine("Dator organisation: " + Environment.UserDomainName/*, ctx*/);
-                await WriteLine("Fil mapp: " + Environment.CurrentDirectory/*, ctx*/);
-                await WriteLine("Kommando rad: " + "\"" + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + "\""/*, ctx*/);
+                awaiSendString += t WriteLine("Dator namn: " + Environment.MachineName/*, ctx*/);
+                SendString += WriteLine("Användarnamn: " + Environment.UserName/*, ctx*/);
+                SendString += WriteLine("Dator organisation: " + Environment.UserDomainName/*, ctx*/);
+                SendString += WriteLine("Fil mapp: " + Environment.CurrentDirectory/*, ctx*/);
+                SendString += WriteLine("Kommando rad: " + "\"" + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + "\""/*, ctx*/);
 
                 TimeSpan uptime = TimeSpan.FromMilliseconds(Environment.TickCount);
                 if (uptime.TotalDays >= 1)
                 {
-                    await WriteLine("Tid sen full nedstängning: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                    SendString += WriteLine("Tid sen full nedstängning: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
                 }
                 else if (uptime.TotalHours >= 1)
                 {
-                    await WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
                 }
                 else if (uptime.TotalMinutes >= 1)
                 {
-                    await WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+                    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
                 }
                 else
                 {
-                    await WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+                    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
                 }
 
-                await WriteLine("Antal processor kärnor: " + Environment.ProcessorCount/*, ctx*/);
-                await WriteLine(Environment.Is64BitOperatingSystem ? "64 bitars operativ system" : "32 eller färre bitars operativ system"/*, ctx*/);
-                await WriteLine(Environment.Is64BitProcess ? "64 bitars program" : "32 bitars program"/*, ctx*/);
+                SendString += WriteLine("Antal processor kärnor: " + Environment.ProcessorCount/*, ctx*/);
+                SendString += WriteLine(Environment.Is64BitOperatingSystem ? "64 bitars operativ system" : "32 eller färre bitars operativ system"/*, ctx*/);
+                SendString += WriteLine(Environment.Is64BitProcess ? "64 bitars program" : "32 bitars program"/*, ctx*/);
                 //DiscordEmbedFooter footer = new DiscordEmbedFooter
                 //{
                 //    Text = "help"
@@ -1330,7 +1332,7 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task BotInfo(CommandContext ctx)
             {
-                SendString = string.Empty;
+                string SendString = string.Empty;
                 await WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
                 //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
                 //var a = Client.CurrentApplication.Team.Members.ToArray();
@@ -1341,24 +1343,24 @@ namespace DiscordBot
                 var b = Client.CurrentApplication.Owners.ToArray();
                 for (int i = 0; i < b.Length; i++)
                 {
-                    await WriteLine("Owner " + (i + 1) + ": " + b[i].Username/*, ctx*/);
+                    SendString += WriteLine("Owner " + (i + 1) + ": " + b[i].Username/*, ctx*/);
                 }
                 TimeSpan uptime = bot.sw.Elapsed;
                 if (uptime.TotalDays >= 1)
                 {
-                    await WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                    SendString += WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
                 }
                 else if (uptime.TotalHours >= 1)
                 {
-                    await WriteLine("Upptid: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                    SendString += WriteLine("Upptid: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
                 }
                 else if (uptime.TotalMinutes >= 1)
                 {
-                    await WriteLine("Upptid: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+                    SendString += WriteLine("Upptid: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
                 }
                 else
                 {
-                    await WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+                    SendString += WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
                 }
                 using (HttpClient client = new HttpClient())
                 {
@@ -1400,12 +1402,13 @@ namespace DiscordBot
                         }
                         int index = 100;
                         string url = "LordGurr/DiscordBot";
-                        string downloaded = "message";
+                        string message = "\"message\":";
+                        string downloaded = message;
                         for (int i = 0; i < 7; i++)
                         {
                             downloaded += downloaded;
                         }
-                        while (AllIndexesOf(downloaded, "message").Count >= index - 5)
+                        while (AllIndexesOf(downloaded, message).Count >= index - 5)
                         {
                             index += 10;
 
@@ -1415,22 +1418,22 @@ namespace DiscordBot
                                 downloaded = await response.Content.ReadAsStringAsync(); // LordGurr/DiscordBot
                             }
                         }
-                        await WriteLine("Har fått " + AllIndexesOf(downloaded, "message").Count + " commits totalt");
+                        SendString += WriteLine("Har fått " + AllIndexesOf(downloaded, message).Count + " commits totalt");
                     }
                     catch (Exception e)
                     {
-                        await WriteLine(e.Message);
+                        SendString += WriteLine(e.Message);
                     }
                 }
-                await WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
+                SendString += WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
                 int members = 0;
                 for (int i = 0; i < kanalerna.Count; i++)
                 {
                     members += kanalerna[i].discordUsers.Count;
                 }
-                await WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
-                await WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
-                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                SendString += WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+                SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
+                SendString += ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
                     Description = SendString,
