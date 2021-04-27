@@ -1106,7 +1106,7 @@ namespace DiscordBot
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine(str);
                 Console.ForegroundColor = ConsoleColor.White;
-                SendString += "\n" + str;
+                //SendString += "\n" + str;
                 return str;
             }
 
@@ -1116,10 +1116,10 @@ namespace DiscordBot
                 Console.WriteLine(str);
                 Console.ForegroundColor = ConsoleColor.White;
                 await ctx.Channel.SendMessageAsync(str).ConfigureAwait(false);
-                if (SendString.Length > 0)
-                {
-                    SendString = "";
-                }
+                //if (SendString.Length > 0)
+                //{
+                //    SendString = "";
+                //}
             }
 
             private async Task CommandWriteLine(string str, CommandContext ctx)
@@ -1271,7 +1271,7 @@ namespace DiscordBot
                 {
                     SendString += WriteLine("Monitor " + (i + 1) + " har en upplösning på " + displays[i].ScreenWidth + " gånger " + displays[i].ScreenHeight + " pixlar"/*, ctx*/);
                 }
-                awaiSendString += t WriteLine("Dator namn: " + Environment.MachineName/*, ctx*/);
+                SendString += WriteLine("Dator namn: " + Environment.MachineName/*, ctx*/);
                 SendString += WriteLine("Användarnamn: " + Environment.UserName/*, ctx*/);
                 SendString += WriteLine("Dator organisation: " + Environment.UserDomainName/*, ctx*/);
                 SendString += WriteLine("Fil mapp: " + Environment.CurrentDirectory/*, ctx*/);
@@ -1433,7 +1433,7 @@ namespace DiscordBot
                 }
                 SendString += WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
                 SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
-                SendString += ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Bot info",
                     Description = SendString,
@@ -1475,10 +1475,10 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task PendingRemind(CommandContext ctx)
             {
-                SendString = string.Empty;
+                string SendString = string.Empty;
                 for (int i = 0; i < bot.queuedRemindMes.Count; i++)
                 {
-                    await WriteLine(bot.queuedRemindMes[i].ToShortTimeString() + "\n");
+                    SendString += WriteLine(bot.queuedRemindMes[i].ToShortTimeString() + "\n");
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
@@ -1583,14 +1583,14 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task GetApp(CommandContext ctx)
             {
-                SendString = string.Empty;
+                string SendString = string.Empty;
                 foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
                 {
                     IntPtr handle = window.Key;
 
                     string title = window.Value;
 
-                    await WriteLine(title/* + ", (" + handle + ")"*/);
+                    SendString += WriteLine(title/* + ", (" + handle + ")"*/);
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
@@ -1606,7 +1606,7 @@ namespace DiscordBot
             [DSharpPlus.CommandsNext.Attributes.RequireOwner]
             public async Task GetAppScreen(CommandContext ctx)
             {
-                SendString = string.Empty;
+                string SendString = string.Empty;
                 foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
                 {
                     IntPtr handle = window.Key;
@@ -2027,16 +2027,16 @@ namespace DiscordBot
                 temp.InsertRange(0, botCoinSaves);
                 temp = temp.OrderBy(a => a.antalBotCoin).ToList();
                 temp.Reverse();
-                SendString = string.Empty;
+                string SendString = string.Empty;
                 for (int a = 0; a < temp.Count; a++)
                 {
                     if (temp[a].userName == null)
                     {
-                        await WriteLine("Botcoin: " + temp[a].antalBotCoin + " ");
+                        SendString += WriteLine("Botcoin: " + temp[a].antalBotCoin + " ");
                     }
                     else
                     {
-                        await WriteLine("Botcoin: " + temp[a].antalBotCoin + " " + temp[a].userName);
+                        SendString += WriteLine("Botcoin: " + temp[a].antalBotCoin + " " + temp[a].userName);
                     }
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
@@ -2184,7 +2184,7 @@ namespace DiscordBot
             {
                 //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
                 //attachments.FindAll(x => x.GetType() == typeof(".png"))
-                SendString = "";
+                string SendString = "";
                 Image image = Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
                 try
                 {
@@ -2234,7 +2234,7 @@ namespace DiscordBot
                             temp += string.Empty + (chars[index]) + (chars[index]);
                         }
 
-                        await WriteLine(temp);
+                        SendString += WriteLine(temp);
                     }
                     await ctx.Channel.SendMessageAsync(SendString).ConfigureAwait(false);
                     GiveBotCoin(ctx);
@@ -2253,7 +2253,7 @@ namespace DiscordBot
             {
                 //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
                 //attachments.FindAll(x => x.GetType() == typeof(".png"))
-                SendString = "";
+                string SendString = "";
                 try
                 {
                     //Image image;
