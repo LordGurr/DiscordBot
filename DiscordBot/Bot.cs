@@ -72,7 +72,7 @@ namespace DiscordBot
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(str);
             Console.ForegroundColor = ConsoleColor.White;
-            await commandLine.SendMessageAsync(str);
+            await commandLine.SendMessageAsync(str).ConfigureAwait(false);
         }
 
         private async Task WriteLine(string str, DiscordChannel e)
@@ -422,59 +422,128 @@ namespace DiscordBot
 
         private bool isAdding = false;
 
-        private void LoadChannels(MessageCreateEventArgs e)
+        private async Task LoadChannels(MessageCreateEventArgs e)
         {
             if (!isAdding)
             {
                 isAdding = true;
                 try
                 {
-                    for (int i = 0; i < kanalerna.Count; i++)
+                    //for (int i = 0; i < kanalerna.Count; i++)
+                    //{
+                    //ChannelSaveData curChannel = kanalerna[i];
+                    List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
+                    ulong guildID = e.Guild.Id;
+                    List<ChannelSaveData> channelsInGuild = kanalerna.FindAll(a => a.realDiscordChannel.GuildId == guildID).ToList();
+                    if (!channelsInGuild.All(a => a.finished))
                     {
-                        ChannelSaveData curChannel = kanalerna[i];
-                        List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
-                        if (!curChannel.finished && theChannels.Any(a => a.Id == curChannel.discordChannel))
+                        List<string> membersGoingToAdd = new List<string>();
+                        for (int a = 0; a < channelsInGuild.Count; a++)
                         {
-                            try
+                            for (int b = 0; b < channelsInGuild[a].membersToAdd.Length; b++)
                             {
-                                for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                                if (!membersGoingToAdd.Contains(channelsInGuild[a].membersToAdd[b]))
                                 {
-                                    var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
-                                    if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
-                                    {
-                                        curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
-                                    }
+                                    membersGoingToAdd.Add(channelsInGuild[a].membersToAdd[b]);
                                 }
-                                curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
-                                curChannel.finished = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                WriteLine(ex.Message);
                             }
                         }
-                    }
-                    if (kanalerna.All(a => a.finished))
-                    {
-                        int members = 0;
-                        for (int i = 0; i < kanalerna.Count; i++)
+                        List<DiscordMemberSaveData> allTheMembersToAddToSave = new List<DiscordMemberSaveData>();
+
+                        for (int a = 0; a < membersGoingToAdd.Count; a++)
                         {
-                            members += kanalerna[i].discordUsers.Count;
+                            var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(membersGoingToAdd[a]));
+                            allTheMembersToAddToSave.Add(new DiscordMemberSaveData(getMem.Result));
                         }
-                        WriteLine("Alla " + members + " medlemmar har blivt inlästa.");
+
+                        for (int a = 0; a < channelsInGuild.Count; a++)
+                        {
+                            //channelsInGuild[a].discordUsers = allTheMembersToAddToSave;
+                            for (int b = 0; b < allTheMembersToAddToSave.Count; b++)
+                            {
+                                if (!channelsInGuild[a].discordUsers.Any(o => o.user == allTheMembersToAddToSave[b].user))
+                                {
+                                    channelsInGuild[a].discordUsers.Add(allTheMembersToAddToSave[b]);
+                                }
+                            }
+                            channelsInGuild[a].membersToAdd = new string[0];
+                            channelsInGuild[a].finished = true;
+                        }
+                        //if (!curChannel.finished && theChannels.Any(a => a.Id == curChannel.discordChannel))
+                        //{
+                        //    try
+                        //    {
+                        //        for (int a = 0; a < curChannel.membersToAdd.Length; a++)
+                        //        {
+                        //            var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(curChannel.membersToAdd[a]));
+                        //            if (!curChannel.discordUsers.Any(o => o.user == getMem.Result.Id))
+                        //            {
+                        //                curChannel.discordUsers.Add(new DiscordMemberSaveData(getMem.Result));
+                        //            }
+                        //        }
+                        //        curChannel.membersToAdd = new string[curChannel.membersToAdd.Length];
+                        //        curChannel.finished = true;
+                        //    }
+                        //    catch (Exception ex)
+                        //    {
+                        //        await WriteLine(ex.Message);
+                        //    }
+                        //}
+                        //}
+                        if (allTheMembersToAddToSave.Count > 0)
+                        {
+                            await WriteLine("Läste in " + allTheMembersToAddToSave.Count + " medlemmar till servern " + e.Guild.Name);
+                        }
+                        if (kanalerna.All(a => a.finished))
+                        {
+                            int members = 0;
+                            for (int i = 0; i < kanalerna.Count; i++)
+                            {
+                                members += kanalerna[i].discordUsers.Count;
+                            }
+                            await WriteLine("Alla " + members + " medlemmar har blivt inlästa.");
+                        }
                     }
                     isAdding = false;
                 }
                 catch (Exception ex)
                 {
                     isAdding = false;
-                    WriteLine(ex.Message);
+                    await WriteLine(ex.Message);
                 }
             }
         }
 
-        public void Test()
+        private async Task LoadAllTheChannels()
         {
+            List<ulong> guildIds = new List<ulong>();
+            List<string> guildNames = new List<string>();
+            List<DiscordChannel> channelsToMessage = new List<DiscordChannel>();
+            for (int i = 0; i < kanalerna.Count; i++)
+            {
+                if (!guildIds.Any(a => a == kanalerna[i].realDiscordChannel.GuildId) && !kanalerna[i].finished)
+                {
+                    guildIds.Add(kanalerna[i].realDiscordChannel.GuildId);
+                    channelsToMessage.Add(kanalerna[i].realDiscordChannel);
+                    guildNames.Add(kanalerna[i].realDiscordChannel.Guild.Name);
+                }
+            }
+            for (int i = 0; i < channelsToMessage.Count; i++)
+            {
+                while (isAdding)
+                {
+                    await Task.Delay(5000);
+                    await WriteLine("Waiting for adder in server: " + guildNames[i]);
+                }
+                await Task.Delay(2000);
+                await channelsToMessage[i].SendMessageAsync("Boten är uppkopplad och redo för kommandon.").ConfigureAwait(false);
+                while (isAdding)
+                {
+                    await Task.Delay(5000);
+                    await WriteLine("Waiting for adder in server: " + guildNames[i]);
+                }
+            }
+            await WriteLine("Alla medlemmar borde ha blivt inlästa.");
         }
 
         public async Task RunAsync()
@@ -541,7 +610,7 @@ namespace DiscordBot
                {
                    await e.Message.RespondAsync("You called...\nSkriv ?help för att se vad jag kan göra.").ConfigureAwait(false);
                }
-               else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!"))
+               else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!") || e.Message.Content.ToLower().StartsWith("hi") && e.Message.Content.ToLower().EndsWith("!") && e.Author.Id == 503720029456695306/* Dad bot's id */)
                    await e.Message.RespondAsync("Hej " + e.Author.Username + "...").ConfigureAwait(false);
            };
             await Reload();
@@ -610,7 +679,9 @@ namespace DiscordBot
             };
             Client.Ready += async (e, a) =>
             {
-                await WriteLine("Boten är uppkopplad och redo för kommandon.");
+                //await WriteLine("Boten är uppkopplad och redo för kommandon.");
+                Thread t = new Thread(async () => await LoadAllTheChannels());
+                t.Start();
             };
             Commands = Client.UseCommandsNext(commandsConfig);
             Commands.RegisterCommands<AdventureCommands>();
