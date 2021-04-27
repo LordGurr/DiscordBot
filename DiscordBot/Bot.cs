@@ -517,7 +517,6 @@ namespace DiscordBot
         private async Task LoadAllTheChannels()
         {
             List<ulong> guildIds = new List<ulong>();
-            List<string> guildNames = new List<string>();
             List<DiscordChannel> channelsToMessage = new List<DiscordChannel>();
             for (int i = 0; i < kanalerna.Count; i++)
             {
@@ -525,25 +524,30 @@ namespace DiscordBot
                 {
                     guildIds.Add(kanalerna[i].realDiscordChannel.GuildId);
                     channelsToMessage.Add(kanalerna[i].realDiscordChannel);
-                    guildNames.Add(kanalerna[i].realDiscordChannel.Guild.Name);
                 }
             }
             for (int i = 0; i < channelsToMessage.Count; i++)
             {
-                while (isAdding)
+                if (isAdding)
                 {
-                    await Task.Delay(5000);
-                    await WriteLine("Waiting for adder in server: " + guildNames[i]);
+                    await WriteLine("Waiting for adder in server: " + channelsToMessage[i].Guild.Name);
+                    while (isAdding)
+                    {
+                        await Task.Delay(5000);
+                    }
                 }
                 await Task.Delay(2000);
                 await channelsToMessage[i].SendMessageAsync("Boten är uppkopplad och redo för kommandon.").ConfigureAwait(false);
-                while (isAdding)
+                if (isAdding)
                 {
-                    await Task.Delay(5000);
-                    await WriteLine("Waiting for adder in server: " + guildNames[i]);
+                    await WriteLine("Waiting for adder in server: " + channelsToMessage[i].Guild.Name);
+                    while (isAdding)
+                    {
+                        await Task.Delay(5000);
+                    }
                 }
             }
-            await WriteLine("Alla medlemmar borde ha blivt inlästa.");
+            await WriteLine("Det borde stå att alla medlemmar blivit inlästa.");
         }
 
         public async Task RunAsync()
@@ -589,7 +593,7 @@ namespace DiscordBot
                        AddMembers(e);
                        if (!kanalerna.All(a => a.finished) && !isAdding)
                        {
-                           Thread t = new Thread(() => LoadChannels(e));
+                           Thread t = new Thread(async () => await LoadChannels(e));
                            t.Start();
                        }
                    }
@@ -712,6 +716,14 @@ namespace DiscordBot
             if (restart)
             {
                 await WriteLine("Will start again after reboot.");
+            }
+            if (isAdding)
+            {
+                await WriteLine("Väntar på att ladda in medlemmar ");
+                while (isAdding)
+                {
+                    await Task.Delay(5000);
+                }
             }
             MessageCreateEventArgs message;
             message = null;
@@ -1685,6 +1697,14 @@ namespace DiscordBot
                     //TimeSpan temp = DateTime.Now - lastSave;
                     //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
                     await CommandWriteLine("Stänger ner omdelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
+                    if (bot.isAdding)
+                    {
+                        await WriteLine("Väntar på att ladda in medlemmar ", ctx);
+                        while (bot.isAdding)
+                        {
+                            await Task.Delay(5000);
+                        }
+                    }
                     await Client.DisconnectAsync();
                     await Task.Delay(500);
                     await SaveAllbotcoin(ctx);
