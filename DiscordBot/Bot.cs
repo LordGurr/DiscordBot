@@ -57,7 +57,7 @@ namespace DiscordBot
 
         public const string tempImagePng = "screenshotTemp.png";
 
-        public List<DateTime> queuedRemindMes = new List<DateTime>();
+        public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
         //public VoiceNextExtension Voice { get; set; } //To play music
 
@@ -1101,13 +1101,13 @@ namespace DiscordBot
 
             //private string SendString = "";
 
-            private async Task<string> WriteLine(string str)
+            private string WriteLine(string str)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine(str);
                 Console.ForegroundColor = ConsoleColor.White;
                 //SendString += "\n" + str;
-                return str;
+                return str + "\n";
             }
 
             private async Task WriteLine(string str, CommandContext ctx)
@@ -1333,7 +1333,7 @@ namespace DiscordBot
             public async Task BotInfo(CommandContext ctx)
             {
                 string SendString = string.Empty;
-                await WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
+                SendString += WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
                 //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
                 //var a = Client.CurrentApplication.Team.Members.ToArray();
                 //for (int i = 0; i < a.Length; i++)
@@ -1379,7 +1379,7 @@ namespace DiscordBot
                             if (start >= 0)
                             {
                                 int end = responseBody.IndexOf("\",", start + 1 + temp.Length);
-                                await WriteLine("Programmerings språk: " + responseBody.Substring(start + temp.Length, end - start - 12));
+                                SendString += WriteLine("Programmerings språk: " + responseBody.Substring(start + temp.Length, end - start - 12));
                             }
                             temp = "\"created_at\":\"";
                             start = responseBody.IndexOf(temp);
@@ -1388,7 +1388,7 @@ namespace DiscordBot
                                 int end = responseBody.IndexOf("\"", start + 1 + temp.Length);
                                 string send = responseBody.Substring(start + temp.Length, end - start - 14);
                                 DateTime dateTime = Convert.ToDateTime(send);
-                                await WriteLine("Github repo skapades: " + dateTime.ToLongDateString());
+                                SendString += WriteLine("Github repo skapades: " + dateTime.ToLongDateString());
                             }
                             temp = "\"updated_at\":\"";
                             start = responseBody.IndexOf(temp);
@@ -1397,7 +1397,7 @@ namespace DiscordBot
                                 int end = responseBody.IndexOf("\"", start + 1 + temp.Length);
                                 string send = responseBody.Substring(start + temp.Length, end - start - 15);
                                 DateTime dateTime = Convert.ToDateTime(send);
-                                await WriteLine("Senast uppdaterad: " + dateTime.ToLongDateString());
+                                SendString += WriteLine("Senast uppdaterad: " + dateTime.ToLongDateString());
                             }
                         }
                         int index = 100;
@@ -1478,7 +1478,7 @@ namespace DiscordBot
                 string SendString = string.Empty;
                 for (int i = 0; i < bot.queuedRemindMes.Count; i++)
                 {
-                    SendString += WriteLine(bot.queuedRemindMes[i].ToShortTimeString() + "\n");
+                    SendString += WriteLine(bot.queuedRemindMes[i].dateTime.ToShortTimeString() + " " + bot.queuedRemindMes[i].username);
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
@@ -2074,9 +2074,9 @@ namespace DiscordBot
                     }
                     TimeSpan timeSpan = remindTime - current;
                     await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
-                    bot.queuedRemindMes.Add(remindTime);
+                    bot.queuedRemindMes.Add(new RemindmeSave(remindTime, ctx.Message.Author.Username));
                     await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
-                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    int index = bot.queuedRemindMes.FindIndex(a => a.dateTime == remindTime);
                     if (index >= 0)
                     {
                         bot.queuedRemindMes.RemoveAt(index);
@@ -2097,7 +2097,7 @@ namespace DiscordBot
                 }
                 catch (Exception e)
                 {
-                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    int index = bot.queuedRemindMes.FindIndex(a => a.dateTime == remindTime);
                     if (index >= 0)
                     {
                         bot.queuedRemindMes.RemoveAt(index);
@@ -2134,9 +2134,9 @@ namespace DiscordBot
                     }
                     TimeSpan timeSpan = remindTime - current;
                     await ctx.Channel.SendMessageAsync("Ok, will remind you at " + remindTime.ToShortTimeString() + ".").ConfigureAwait(false);
-                    bot.queuedRemindMes.Add(remindTime);
+                    bot.queuedRemindMes.Add(new RemindmeSave(remindTime, ctx.Message.Author.Username));
                     await Task.Delay(Convert.ToInt32(timeSpan.TotalMilliseconds));
-                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    int index = bot.queuedRemindMes.FindIndex(a => a.dateTime == remindTime);
                     if (index >= 0)
                     {
                         bot.queuedRemindMes.RemoveAt(index);
@@ -2145,7 +2145,7 @@ namespace DiscordBot
                 }
                 catch (Exception e)
                 {
-                    int index = bot.queuedRemindMes.FindIndex(a => a == remindTime);
+                    int index = bot.queuedRemindMes.FindIndex(a => a.dateTime == remindTime);
                     if (index >= 0)
                     {
                         bot.queuedRemindMes.RemoveAt(index);
@@ -3121,6 +3121,18 @@ namespace DiscordBot
                     Console.WriteLine(temp);
                     save.fyrkanten[save.position[1]] = temp;
                 }
+            }
+        }
+
+        public class RemindmeSave
+        {
+            public DateTime dateTime { private set; get; }
+            public string username { private set; get; }
+
+            public RemindmeSave(DateTime _dateTime, string _username)
+            {
+                username = _username;
+                dateTime = _dateTime;
             }
         }
 
