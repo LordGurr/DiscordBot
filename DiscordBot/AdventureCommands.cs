@@ -2,9 +2,6 @@
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,16 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
-using HWND = System.IntPtr;
 using System.Net.Http;
-using DSharpPlus.CommandsNext.Converters;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Serialization;
-using System.Threading;
 using static DiscordBot.Bot;
 
 namespace DiscordBot

@@ -1,6 +1,5 @@
 ﻿using DSharpPlus;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
@@ -12,15 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Net;
 using HWND = System.IntPtr;
-using System.Net.Http;
-using DSharpPlus.CommandsNext.Converters;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using System.Threading;
 
@@ -218,14 +211,20 @@ namespace DiscordBot
             Image img = screenCapture.CaptureWindow(handle);
             screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
-
-            if (ctx == null || ctx.Channel.Id == commandLine.Id)
+            if (OpenWindowGetter.IsWindowVisible(handle))
             {
-                await UploadFile(tempImagePng);
+                if (ctx == null || ctx.Channel.Id == commandLine.Id)
+                {
+                    await UploadFile(tempImagePng);
+                }
+                else if (ctx.Channel.Id != commandLine.Id)
+                {
+                    await UploadFile(tempImagePng, ctx.Channel);
+                }
             }
-            else if (ctx.Channel.Id != commandLine.Id)
+            else
             {
-                await UploadFile(tempImagePng, ctx.Channel);
+                await ctx.RespondAsync("Windown is not visible").ConfigureAwait(false);
             }
         }
 
@@ -238,14 +237,20 @@ namespace DiscordBot
             Image img = screenCapture.CaptureWindow(handle);
             screenCapture.CaptureScreenToFile(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, img);
             //await UploadFile("screenshotTemp.png");
-
-            if (ctx == null || ctx.Channel.Id == commandLine.Id)
+            if (OpenWindowGetter.IsWindowVisible(handle))
             {
-                await UploadFile(tempImagePng);
+                if (ctx == null || ctx.Channel.Id == commandLine.Id)
+                {
+                    await UploadFile(tempImagePng);
+                }
+                else if (ctx.Channel.Id != commandLine.Id)
+                {
+                    await UploadFile(tempImagePng, ctx.Channel);
+                }
             }
-            else if (ctx.Channel.Id != commandLine.Id)
+            else
             {
-                await UploadFile(tempImagePng, ctx.Channel);
+                await ctx.Message.RespondAsync("Windown is not visible").ConfigureAwait(false);
             }
         }
 
@@ -1689,10 +1694,10 @@ namespace DiscordBot
             private static extern int GetWindowTextLength(HWND hWnd);
 
             [DllImport("USER32.DLL")]
-            private static extern bool IsWindowVisible(HWND hWnd);
+            public static extern bool IsWindowVisible(HWND hWnd);
 
             [DllImport("USER32.DLL")]
-            private static extern IntPtr GetShellWindow();
+            public static extern IntPtr GetShellWindow();
         }
     }
 }
