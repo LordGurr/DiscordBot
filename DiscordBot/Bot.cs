@@ -885,7 +885,20 @@ namespace DiscordBot
                     return i;
                 }
             }
+            string command = "botcoin";
+            var cmds = ctx.CommandsNext;
 
+            // retrieve the command and its arguments from the given string
+            var cmd = cmds.FindCommand(command, out var customArgs);
+            //for (int i = 1; i < command.Length; i++)
+            //{
+            //    customArgs += command[i] + " ";
+            //}
+            // create a fake CommandContext
+            var fakeContext = cmds.CreateFakeContext(ctx.Member, ctx.Channel, command, ctx.Prefix, cmd, customArgs);
+
+            // and perform the sudo
+            cmds.ExecuteCommandAsync(fakeContext);
             return -1;
         }
 
