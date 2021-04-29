@@ -361,6 +361,7 @@ namespace DiscordBot
                 members += kanalerna[i].discordUsers.Count;
             }
             SendString += WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+            SendString += WriteLine("Sparade senast klockan " + bot.lastSave.ToShortTimeString() + ".");
             SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {
@@ -383,11 +384,10 @@ namespace DiscordBot
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("online")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
-        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        [DSharpPlus.CommandsNext.Attributes.Description("Updates who is online.")]
         public async Task UpdateOnline(CommandContext ctx)
         {
-            await bot.CheckOnline();
+            await bot.CheckOnline(ctx.Channel);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("savemembers")]
