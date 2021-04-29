@@ -39,7 +39,7 @@ namespace DiscordBot
         public static List<BotCoinSaveData> botCoinSaves = new List<BotCoinSaveData>();
         public static List<ChannelSaveData> kanalerna = new List<ChannelSaveData>();
 
-        public DiscordChannel commandLine;
+        public static DiscordChannel commandLine;
 
         public bool shutdown = false;
         public bool restart = true;
@@ -52,9 +52,48 @@ namespace DiscordBot
 
         public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
-        //public VoiceNextExtension Voice { get; set; } //To play music
+        private List<MemberToCheck> membersChecking = new List<MemberToCheck>();
+        private DiscordChannel channelForOnlineMessage;
 
-        private async Task WriteLine(string str)
+        //public VoiceNextExtension Voice { get; set; } //To play music
+        public async Task CheckOnline()
+        {
+            for (int i = 0; i < membersChecking.Count; i++)
+            {
+                var task = membersChecking[i].Online();
+                if (membersChecking[i].online != task.Result)
+                {
+                    membersChecking[i].online = task.Result;
+                    if (membersChecking[i].online)
+                    {
+                        await channelForOnlineMessage.SendMessageAsync(membersChecking[i].discordUser.Username + " just went online!");
+                        await channelForOnlineMessage.SendMessageAsync(membersChecking[i].MessageOnline);
+                    }
+                    else
+                    {
+                        await channelForOnlineMessage.SendMessageAsync(membersChecking[i].discordUser.Username + " just went offline...");
+                        await channelForOnlineMessage.SendMessageAsync(membersChecking[i].MessageOffline);
+                    }
+                }
+            }
+        }
+
+        private async Task ReadCheckMemebers()
+        {
+            var mem = Client.GetUserAsync(376786629135958026);
+            //membersChecking.Add(new MemberToCheck(mem.Result, "Ya boi jens online", "Ya boi jens offline"));
+            membersChecking.Add(new MemberToCheck(mem.Result, "https://media.giphy.com/media/NvZ182nKxesLGdFvm8/giphy.gif", "https://media.giphy.com/media/cMAdGn8Zrj80cTZPPV/giphy.gif"));
+            mem = Client.GetUserAsync(454590972186198028);
+            //membersChecking.Add(new MemberToCheck(mem.Result, "Tim checking in", "Tim died"));
+            membersChecking.Add(new MemberToCheck(mem.Result, "https://tenor.com/view/timonline-gif-21239987", "https://tenor.com/view/tim-is-offline-ooo-tim-is-so-hot-ilove-tim-tim-gif-20391292"));
+            mem = Client.GetUserAsync(788527231516672010);
+            //membersChecking.Add(new MemberToCheck(mem.Result, "Eric e online", "Erik offline"));
+            membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
+            var channel = Client.GetChannelAsync(779274720046350356);
+            channelForOnlineMessage = channel.Result;
+        }
+
+        private static async Task WriteLine(string str)
         {
             //Utskrivet.Add(str);
             if (commandLine == null)
@@ -552,13 +591,15 @@ namespace DiscordBot
                     }
                 }
             }
-            await WriteLine("Det borde stå att alla medlemmar blivit inlästa.");
+            sw.Stop();
+            await WriteLine("Det borde stå att alla medlemmar blivit inlästa och det tog " + sw.Elapsed.TotalSeconds + " sekunder.");
         }
 
         public async Task RunAsync()
         {
             AdventureCommands.bot = this;
-            sw = Stopwatch.StartNew();
+            sw = new Stopwatch();
+            sw.Start();
             Environment.CurrentDirectory = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty);
             restart = true;
             var json = string.Empty;
@@ -575,6 +616,7 @@ namespace DiscordBot
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
                 MinimumLogLevel = LogLevel.Debug,
+                Intents = DiscordIntents.All,
             };
             Client = new DiscordClient(config);
             //ReadyEventArgs e = Client.Ready;
@@ -587,7 +629,7 @@ namespace DiscordBot
                 EnableDms = true,
                 IgnoreExtraArguments = true,
             };
-            sparTid = DateTime.Now.AddMinutes(5) - DateTime.Now;
+            sparTid = DateTime.Now.AddMinutes(2) - DateTime.Now;
             lastSave = DateTime.Now;
             Client.MessageCreated += async (s, e) =>
            {
@@ -664,6 +706,8 @@ namespace DiscordBot
                     members += kanalerna[i].discordUsers.Count;
                 }
                 await WriteLine("Har läst in " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+                await ReadCheckMemebers();
+                await WriteLine("Har läst in " + membersChecking.Count + " som ska få online notiser");
                 TimeSpan timeSpan = DateTime.Now - dateTime;
                 double totalMilliseconds = Convert.ToInt32(timeSpan.TotalMilliseconds * 100);
                 totalMilliseconds /= 100;
@@ -692,6 +736,37 @@ namespace DiscordBot
                 Thread t = new Thread(async () => await LoadAllTheChannels());
                 t.Start();
             };
+            //Client.GuildMemberUpdated += async (e, a) =>
+            //{
+            //    await WriteLine(a.Member.Username + " was updated in " + a.Guild.Name);
+            //    try
+            //    {
+            //        if (a.Member.Presence != null)
+            //        {
+            //            DiscordPresence presence = a.Member.Presence;
+            //            if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+            //            {
+            //                await WriteLine("is online");
+            //            }
+            //            else
+            //            {
+            //                await WriteLine("is offline");
+            //            }
+            //        }
+            //        else
+            //        {
+            //            await WriteLine("is offline");
+            //        }
+            //    }
+            //    catch (Exception)
+            //    {
+            //        await WriteLine("is offline");
+            //    }
+            //};
+            //Client.UserUpdated += async (e, a) =>
+            //{
+            //    await WriteLine(a.UserBefore.Username + " was updated");
+            //};
             Commands = Client.UseCommandsNext(commandsConfig);
             Commands.RegisterCommands<AdventureCommands>();
             //Voice = Client.UseVoiceNext(); //To play msucic
@@ -715,6 +790,7 @@ namespace DiscordBot
                 {
                     await SaveBotCoin();
                     await SaveMembers();
+                    await CheckOnline();
                 }
             }
             await WriteLine("Shutting down.");
@@ -1114,6 +1190,59 @@ namespace DiscordBot
                 if (index == -1)
                     return indexes;
                 indexes.Add(index);
+            }
+        }
+
+        public class MemberToCheck
+        {
+            public bool online;
+            public DiscordUser discordUser { private set; get; }
+
+            public string MessageOnline;
+            public string MessageOffline;
+
+            //public string pathOnline;
+            //public string pathOffline;
+            public MemberToCheck(DiscordUser _discordUser, string _MessageOnline, string _MessageOffline/*, string _pathOnline, string _pathOffline*/)
+            {
+                discordUser = _discordUser;
+                var task = Online();
+                online = task.Result;
+                MessageOnline = _MessageOnline;
+                MessageOffline = _MessageOffline;
+                //pathOffline = _pathOffline;
+                //pathOnline = _pathOnline;
+            }
+
+            public async Task<bool> Online()
+            {
+                try
+                {
+                    if (discordUser.Presence != null)
+                    {
+                        DiscordPresence presence = discordUser.Presence;
+                        if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                        {
+                            await WriteLine(discordUser.Username + " is online");
+                            return true;
+                        }
+                        else
+                        {
+                            await WriteLine(discordUser.Username + " is offline");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        await WriteLine(discordUser.Username + " is offline");
+                        return false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                    return false;
+                }
             }
         }
 

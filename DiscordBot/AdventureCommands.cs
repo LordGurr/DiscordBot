@@ -53,14 +53,14 @@ namespace DiscordBot
             Console.WriteLine(str);
             Console.ForegroundColor = ConsoleColor.White;
             await ctx.Channel.SendMessageAsync(str).ConfigureAwait(false);
-            if (bot.commandLine == null)
+            if (commandLine == null)
             {
                 var g = Client.GetChannelAsync(827869624808374293);
-                bot.commandLine = g.Result;
+                commandLine = g.Result;
             }
-            if (bot.commandLine != ctx.Channel)
+            if (commandLine != ctx.Channel)
             {
-                await bot.commandLine.SendMessageAsync(str).ConfigureAwait(false);
+                await commandLine.SendMessageAsync(str).ConfigureAwait(false);
             }
         }
 
@@ -376,10 +376,18 @@ namespace DiscordBot
         public async Task SaveAllbotcoin(CommandContext ctx)
         {
             await bot.SaveBotCoin();
-            if (ctx.Channel.Id != bot.commandLine.Id)
+            if (ctx.Channel.Id != commandLine.Id)
             {
                 await WriteLine("Sparade alla " + botCoinSaves.Count + " botcoin användares botcoin.", ctx);
             }
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("online")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task UpdateOnline(CommandContext ctx)
+        {
+            await bot.CheckOnline();
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("savemembers")]
@@ -388,7 +396,7 @@ namespace DiscordBot
         public async Task SaveAllmembers(CommandContext ctx)
         {
             await bot.SaveMembers();
-            if (ctx.Channel.Id != bot.commandLine.Id)
+            if (ctx.Channel.Id != commandLine.Id)
             {
                 int members = 0;
                 for (int i = 0; i < kanalerna.Count; i++)
@@ -1233,11 +1241,11 @@ namespace DiscordBot
                 using (WebClient client = new WebClient())
                 {
                     //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
-                    string code = client.DownloadString("https://raw.githubusercontent.com/LordGurr/DiscordBot/master/DiscordBot/Bot.cs");
+                    string code = client.DownloadString("https://raw.githubusercontent.com/LordGurr/DiscordBot/master/DiscordBot/AdventureCommands.cs");
                     //SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
-                    if (code.Contains("            [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]"))
+                    if (code.Contains("        [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]"))
                     {
-                        int index = code.IndexOf("            [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]");
+                        int index = code.IndexOf("        [DSharpPlus.CommandsNext.Attributes.Command(\"" + commandName + "\")]");
                         int brackets = 1;
                         int next = code.IndexOf("{", index) + 1;
                         string temp = code.Substring(index, next - index);
