@@ -116,13 +116,16 @@ namespace DiscordBot
         {
             var mem = Client.GetUserAsync(376786629135958026);
             //membersChecking.Add(new MemberToCheck(mem.Result, "Ya boi jens online", "Ya boi jens offline"));
-            membersChecking.Add(new MemberToCheck(mem.Result, "https://media.giphy.com/media/NvZ182nKxesLGdFvm8/giphy.gif", "https://media.giphy.com/media/cMAdGn8Zrj80cTZPPV/giphy.gif"));
+            if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
+                membersChecking.Add(new MemberToCheck(mem.Result, "https://media.giphy.com/media/NvZ182nKxesLGdFvm8/giphy.gif", "https://media.giphy.com/media/cMAdGn8Zrj80cTZPPV/giphy.gif"));
             mem = Client.GetUserAsync(454590972186198028);
             //membersChecking.Add(new MemberToCheck(mem.Result, "Tim checking in", "Tim died"));
-            membersChecking.Add(new MemberToCheck(mem.Result, "https://tenor.com/view/timonline-gif-21239987", "https://tenor.com/view/tim-is-offline-ooo-tim-is-so-hot-ilove-tim-tim-gif-20391292"));
+            if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
+                membersChecking.Add(new MemberToCheck(mem.Result, "https://tenor.com/view/timonline-gif-21239987", "https://tenor.com/view/tim-is-offline-ooo-tim-is-so-hot-ilove-tim-tim-gif-20391292"));
             mem = Client.GetUserAsync(788527231516672010);
             //membersChecking.Add(new MemberToCheck(mem.Result, "Eric e online", "Erik offline"));
-            membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
+            if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
+                membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
             var channel = Client.GetChannelAsync(837361660007415828);
             channelForOnlineMessage = channel.Result;
         }
