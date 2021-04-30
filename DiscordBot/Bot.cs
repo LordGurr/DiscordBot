@@ -97,6 +97,7 @@ namespace DiscordBot
                         await channelForOnlineMessage.SendMessageAsync(membersChecking[i].MessageOffline);
                     }
                 }
+                await WriteLine(membersChecking[i].discordUser.Username + " är online: " + task.Result);
             }
         }
 
@@ -1259,6 +1260,11 @@ namespace DiscordBot
                     if (discordUser.Presence != null)
                     {
                         DiscordPresence presence = discordUser.Presence;
+                        if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
+                        {
+                            await WriteLine(discordUser.Username + " is not set");
+                            return false;
+                        }
                         if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
                         {
                             await WriteLine(discordUser.Username + " is online");
@@ -1269,10 +1275,15 @@ namespace DiscordBot
                             await WriteLine(discordUser.Username + " is offline");
                             return false;
                         }
-                        else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
                         {
                             await WriteLine(discordUser.Username + " is trying to hide");
                             return true;
+                        }
+                        else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                        {
+                            await WriteLine(discordUser.Username + " is trying to hide");
+                            return false;
                         }
                         else
                         {
@@ -1300,35 +1311,54 @@ namespace DiscordBot
                     if (discordUser.Presence != null)
                     {
                         DiscordPresence presence = discordUser.Presence;
+                        if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
+                        {
+                            await WriteLine(discordUser.Username + " is not set");
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                            return false;
+                        }
                         if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
                         {
                             await WriteLine(discordUser.Username + " is online");
-                            await channel.SendMessageAsync(discordUser.Username + " is online").ConfigureAwait(false);
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is online").ConfigureAwait(false);
                             return true;
                         }
                         else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Offline || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Offline || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Offline)
                         {
                             await WriteLine(discordUser.Username + " is offline");
-                            await channel.SendMessageAsync(discordUser.Username + " is offline").ConfigureAwait(false);
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is offline").ConfigureAwait(false);
                             return false;
+                        }
+                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
+                        {
+                            await WriteLine(discordUser.Username + " is trying to hide");
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                            return true;
                         }
                         else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
                         {
                             await WriteLine(discordUser.Username + " is trying to hide");
-                            await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
-                            return true;
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                            return false;
                         }
                         else
                         {
                             await WriteLine(discordUser.Username + " is not set");
-                            await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
                             return false;
                         }
                     }
                     else
                     {
                         await WriteLine(discordUser.Username + " is not set");
-                        await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                        if (channel != commandLine)
+                            await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
                         return false;
                     }
                 }
