@@ -1339,11 +1339,18 @@ namespace DiscordBot
                                 await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
                             return true;
                         }
-                        else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Invisible || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Invisible || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Invisible)
                         {
                             await WriteLine(discordUser.Username + " is trying to hide");
                             if (channel != commandLine)
                                 await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                            return false;
+                        }
+                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Idle || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Idle || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Idle)
+                        {
+                            await WriteLine(discordUser.Username + " is afk");
+                            if (channel != commandLine)
+                                await channel.SendMessageAsync(discordUser.Username + " is afk").ConfigureAwait(false);
                             return false;
                         }
                         else

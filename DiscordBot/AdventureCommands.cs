@@ -467,11 +467,17 @@ namespace DiscordBot
                         //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
                         return discordUser.Username + " doesn't want to be disturbed";
                     }
-                    else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Invisible || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Invisible || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Invisible)
                     {
                         //WriteLine(discordUser.Username + " is trying to hide");
                         //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
                         return discordUser.Username + " is trying to hide";
+                    }
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Idle || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Idle || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Idle)
+                    {
+                        //WriteLine(discordUser.Username + " is trying to hide");
+                        //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                        return discordUser.Username + " is afk";
                     }
                     else
                     {
