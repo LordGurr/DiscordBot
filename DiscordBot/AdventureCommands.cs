@@ -445,7 +445,7 @@ namespace DiscordBot
                 if (discordUser.Presence != null)
                 {
                     DiscordPresence presence = discordUser.Presence;
-                    if (!presence.ClientStatus.Mobile.HasValue || !presence.ClientStatus.Desktop.HasValue || !presence.ClientStatus.Web.HasValue)
+                    if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
                     {
                         return discordUser.Username + " is not set";
                     }
