@@ -1260,6 +1260,29 @@ namespace DiscordBot
                     if (discordUser.Presence != null)
                     {
                         DiscordPresence presence = discordUser.Presence;
+                        if (presence.Status != null)
+                        {
+                            if (presence.Status == UserStatus.Online)
+                            {
+                                await WriteLine(discordUser.Username + " is online");
+                                return true;
+                            }
+                            else if (presence.Status == UserStatus.Offline)
+                            {
+                                await WriteLine(discordUser.Username + " is offline");
+                                return false;
+                            }
+                            else if (presence.Status == UserStatus.Invisible)
+                            {
+                                await WriteLine(discordUser.Username + " is trying to hide");
+                                return true;
+                            }
+                            else if (presence.Status == UserStatus.Idle)
+                            {
+                                await WriteLine(discordUser.Username + " is afk");
+                                return true;
+                            }
+                        }
                         if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
                         {
                             await WriteLine(discordUser.Username + " is not set");
@@ -1311,6 +1334,29 @@ namespace DiscordBot
                     if (discordUser.Presence != null)
                     {
                         DiscordPresence presence = discordUser.Presence;
+                        if (presence.Status != null)
+                        {
+                            if (presence.Status == UserStatus.Online)
+                            {
+                                await WriteLine(discordUser.Username + " is online");
+                                return true;
+                            }
+                            else if (presence.Status == UserStatus.Offline)
+                            {
+                                await WriteLine(discordUser.Username + " is offline");
+                                return false;
+                            }
+                            else if (presence.Status == UserStatus.Invisible)
+                            {
+                                await WriteLine(discordUser.Username + " is trying to hide");
+                                return true;
+                            }
+                            else if (presence.Status == UserStatus.Idle)
+                            {
+                                await WriteLine(discordUser.Username + " is afk");
+                                return true;
+                            }
+                        }
                         if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
                         {
                             await WriteLine(discordUser.Username + " is not set");

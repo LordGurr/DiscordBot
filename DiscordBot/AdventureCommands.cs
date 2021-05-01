@@ -388,37 +388,83 @@ namespace DiscordBot
         public async Task UpdateOnline(CommandContext ctx)
         {
             await bot.CheckOnline(ctx.Channel);
+            GiveBotCoin(ctx);
         }
+
+        //[DSharpPlus.CommandsNext.Attributes.Command("isonline")]
+        //[DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
+        //public async Task IsOnline(CommandContext ctx)
+        //{
+        //    try
+        //    {
+        //        List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
+        //        string SendString = string.Empty;
+        //        for (int i = 0; i < usersMentioned.Count; i++)
+        //        {
+        //            SendString += WriteLine(OnlineString(usersMentioned[i]));
+        //        }
+        //        if (SendString == string.Empty)
+        //        {
+        //            await ctx.Channel.SendMessageAsync("Please mention a user when sending this message");
+        //        }
+        //        else
+        //        {
+        //            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+        //            {
+        //                Title = "Is online",
+        //                Description = SendString,
+        //            });
+        //        }
+        //        GiveBotCoin(ctx);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        await ctx.Channel.SendMessageAsync("Error: " + e.Message);
+        //    }
+        //}
 
         [DSharpPlus.CommandsNext.Attributes.Command("isonline")]
         [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
-        public async Task IsOnline(CommandContext ctx)
+        public async Task IsOnline(CommandContext ctx, [RemainingText] string idstring)
         {
-            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
-            string SendString = string.Empty;
-            for (int i = 0; i < usersMentioned.Count; i++)
+            List<string> idlist = idstring.Split(" ").ToList();
+            List<ulong> ids = new List<ulong>();
+            for (int i = 0; i < idlist.Count; i++)
             {
-                SendString += WriteLine(OnlineString(usersMentioned[i]));
-            }
-            if (SendString == string.Empty)
-            {
-                await ctx.Channel.SendMessageAsync("Please mention a user when sending this message");
-            }
-            else
-            {
-                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                try
                 {
-                    Title = "Is online",
-                    Description = SendString,
-                });
+                    if (!idlist[i].Contains('@'))
+                    {
+                        ids.Add(Convert.ToUInt64(idlist[i]));
+                    }
+                }
+                catch (Exception)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id.");
+                }
             }
-        }
-
-        [DSharpPlus.CommandsNext.Attributes.Command("isonline")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
-        public async Task IsOnline(CommandContext ctx, [RemainingText] string rest)
-        {
             List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                try
+                {
+                    var user = Client.GetUserAsync(ids[i]);
+                    usersMentioned.Add(user.Result);
+                }
+                catch (Exception)
+                {
+                    try
+                    {
+                        var mem = ctx.Guild.GetMemberAsync(ids[i]);
+                        var user = Client.GetUserAsync(mem.Result.Id);
+                        usersMentioned.Add(user.Result);
+                    }
+                    catch (Exception e)
+                    {
+                        await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
+                    }
+                }
+            }
             string SendString = string.Empty;
             for (int i = 0; i < usersMentioned.Count; i++)
             {
@@ -426,7 +472,7 @@ namespace DiscordBot
             }
             if (SendString == string.Empty)
             {
-                await ctx.Channel.SendMessageAsync("Please mention a user when sending this message");
+                await ctx.Channel.SendMessageAsync("The ulongs weren't user id's.");
             }
             else
             {
@@ -445,6 +491,106 @@ namespace DiscordBot
                 if (discordUser.Presence != null)
                 {
                     DiscordPresence presence = discordUser.Presence;
+                    if (presence.Status != null)
+                    {
+                        if (presence.Status == UserStatus.Online)
+                        {
+                            return (discordUser.Username + " is online");
+                        }
+                        else if (presence.Status == UserStatus.Offline)
+                        {
+                            return (discordUser.Username + " is offline");
+                        }
+                        else if (presence.Status == UserStatus.Invisible)
+                        {
+                            return (discordUser.Username + " is trying to hide");
+                        }
+                        else if (presence.Status == UserStatus.Idle)
+                        {
+                            return (discordUser.Username + " is afk");
+                        }
+                    }
+                    if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
+                    {
+                        return discordUser.Username + " is not set";
+                    }
+                    if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
+                    {
+                        //WriteLine(discordUser.Username + " is online");
+                        //channel.SendMessageAsync(discordUser.Username + " is online").ConfigureAwait(false);
+                        return discordUser.Username + " is online";
+                    }
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Offline || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Offline || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Offline)
+                    {
+                        //WriteLine(discordUser.Username + " is offline");
+                        //channel.SendMessageAsync(discordUser.Username + " is offline").ConfigureAwait(false);
+                        return discordUser.Username + " is offline";
+                    }
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
+                    {
+                        //WriteLine(discordUser.Username + " is trying to hide");
+                        //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                        return discordUser.Username + " doesn't want to be disturbed";
+                    }
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Invisible || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Invisible || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Invisible)
+                    {
+                        //WriteLine(discordUser.Username + " is trying to hide");
+                        //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                        return discordUser.Username + " is trying to hide";
+                    }
+                    else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Idle || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Idle || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Idle)
+                    {
+                        //WriteLine(discordUser.Username + " is trying to hide");
+                        //channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                        return discordUser.Username + " is afk";
+                    }
+                    else
+                    {
+                        //WriteLine(discordUser.Username + " is not set");
+                        //channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                        return discordUser.Username + " is not set";
+                    }
+                }
+                else
+                {
+                    //await WriteLine(discordUser.Username + " is not set");
+                    //await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                    return discordUser.Username + " is not set";
+                }
+            }
+            catch (Exception e)
+            {
+                //await WriteLine(e.Message);
+                return discordUser.Username + " errored: " + e.Message;
+            }
+        }
+
+        private string OnlineString(DiscordMember discordUser)
+        {
+            try
+            {
+                if (discordUser.Presence != null)
+                {
+                    DiscordPresence presence = discordUser.Presence;
+                    if (presence.Status != null)
+                    {
+                        if (presence.Status == UserStatus.Online)
+                        {
+                            return (discordUser.Username + " is online");
+                        }
+                        else if (presence.Status == UserStatus.Offline)
+                        {
+                            return (discordUser.Username + " is offline");
+                        }
+                        else if (presence.Status == UserStatus.Invisible)
+                        {
+                            return (discordUser.Username + " is trying to hide");
+                        }
+                        else if (presence.Status == UserStatus.Idle)
+                        {
+                            return (discordUser.Username + " is afk");
+                        }
+                    }
                     if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
                     {
                         return discordUser.Username + " is not set";
@@ -1332,9 +1478,9 @@ namespace DiscordBot
                     //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
                     string url = client.DownloadString("https://inspirobot.me/api?generate=true");
                     SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
-                    await bot.UploadFile(tempImagePng, ctx.Channel);
-                    GiveBotCoin(ctx);
                 }
+                await bot.UploadFile(tempImagePng, ctx.Channel);
+                GiveBotCoin(ctx);
             }
             catch (Exception e)
             {
