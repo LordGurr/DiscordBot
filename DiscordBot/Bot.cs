@@ -638,7 +638,7 @@ namespace DiscordBot
             var activity = new DiscordActivity
             {
                 Name = "John Conway's game of life",
-                ActivityType = ActivityType.Streaming,
+                ActivityType = ActivityType.Playing,
             };
             await Client.UpdateStatusAsync(activity);
         }
@@ -993,18 +993,28 @@ namespace DiscordBot
                 try
                 {
                     string[] temp = tempArray[i].Split(" ");
-
-                    ulong id = (ulong)Convert.ToDecimal(temp[0]);
-                    List<GameTimeSave> games = new List<GameTimeSave>();
-                    for (int a = 1; a < temp.Length; a += 2)
+                    if (temp.Length > 1)
                     {
-                        string gameName = temp[a];
-                        TimeSpan timeSpan = TimeSpan.Parse(temp[a + 1]);
-                        games.Add(new GameTimeSave(gameName, timeSpan));
+                        ulong id = (ulong)Convert.ToDecimal(temp[0]);
+                        List<GameTimeSave> games = new List<GameTimeSave>();
+                        for (int a = 1; a < temp.Length; a += 2)
+                        {
+                            string gameName = temp[a].Replace("§", " ");
+                            TimeSpan timeSpan = TimeSpan.Parse(temp[a + 1]);
+                            games.Add(new GameTimeSave(gameName, timeSpan));
+                        }
+                        if (!gameSaves.Any(a => a.userId == id))
+                        {
+                            gameSaves.Add(new UserGameSave(id, games));
+                        }
                     }
-                    if (!gameSaves.Any(a => a.userId == id))
+                    else if (temp.Length >= 1)
                     {
-                        gameSaves.Add(new UserGameSave(id, games));
+                        ulong id = (ulong)Convert.ToDecimal(temp[0]);
+                        if (!gameSaves.Any(a => a.userId == id))
+                        {
+                            gameSaves.Add(new UserGameSave(id));
+                        }
                     }
                 }
                 catch (Exception e)
@@ -1023,19 +1033,38 @@ namespace DiscordBot
                 if (gameSaves[i].user.Presence != null)
                 {
                     DiscordPresence presence = gameSaves[i].user.Presence;
-                    for (int a = 0; a < presence.Activities.Count; a++)
+                    if (presence.Activities.Count > 0)
                     {
-                        if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                        for (int a = 0; a < presence.Activities.Count; a++)
                         {
-                            int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                            if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                            {
+                                int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                                TimeSpan timeSpan = DateTime.Now - lastSave;
+                                if (index >= 0)
+                                {
+                                    gameSaves[i].games[index].IncreaseTime(timeSpan);
+                                }
+                                else
+                                {
+                                    gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (presence.Activity.ActivityType == ActivityType.Playing)
+                        {
+                            int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
                             TimeSpan timeSpan = DateTime.Now - lastSave;
                             if (index >= 0)
                             {
-                                gameSaves[i].games[index].IncreaseTime(timeSpan.TotalMinutes);
+                                gameSaves[i].games[index].IncreaseTime(timeSpan);
                             }
                             else
                             {
-                                gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                                gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
                             }
                         }
                     }
@@ -1050,9 +1079,11 @@ namespace DiscordBot
                 for (int i = 0; i < gameSaves.Count; i++)
                 {
                     string saveString = Convert.ToString(gameSaves[i].userId);
+
                     for (int a = 0; a < gameSaves[i].games.Count; a++)
                     {
-                        saveString += " " + gameSaves[i].games[a].gameName + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
+                        string gamename = gameSaves[i].games[a].gameName.Replace(" ", "§");
+                        saveString += " " + gamename + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
                     }
                     tw.WriteLine(saveString);
                 }
@@ -1574,6 +1605,11 @@ namespace DiscordBot
                 var task = statClient.GetUserAsync(userId);
                 user = task.Result;
             }
+
+            public void SetGames(List<GameTimeSave> _games)
+            {
+                games = _games;
+            }
         }
 
         public class GameTimeSave
@@ -1589,9 +1625,9 @@ namespace DiscordBot
                 timeSpentPlaying = _timeSpentPlaying;
             }
 
-            public void IncreaseTime(double minutes)
+            public void IncreaseTime(TimeSpan timeSpan)
             {
-                timeSpentPlaying.Add(new TimeSpan(0, 0, 0, 0, (int)Math.Round(minutes * 60000)));
+                timeSpentPlaying += timeSpan;
             }
         }
 

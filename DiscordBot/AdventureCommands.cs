@@ -1050,6 +1050,7 @@ namespace DiscordBot
                 await Task.Delay(500);
                 await SaveAllbotcoin(ctx);
                 await SaveAllmembers(ctx);
+                await SaveGameTime(ctx);
                 await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
                 bot.Client.Dispose();
                 await Task.Delay(500);
@@ -1370,7 +1371,6 @@ namespace DiscordBot
         public async Task UpdateGameTime(CommandContext ctx)
         {
             await bot.UpdateGameSaves();
-            GiveBotCoin(ctx);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("savegamesaves")]
@@ -1379,11 +1379,18 @@ namespace DiscordBot
         public async Task SaveGameTime(CommandContext ctx)
         {
             await bot.SaveGameSaves();
-            GiveBotCoin(ctx);
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("leaderboard", "botcoinleader", "botcoinboard")]
+        [DSharpPlus.CommandsNext.Attributes.Command("lastsave")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task LastSave(CommandContext ctx)
+        {
+            await ctx.RespondAsync("Last time saved was: " + bot.lastSave.ToShortTimeString());
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("botcoinleaderboard", "botcoinleader", "botcoinboard")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task BotCoinLeaderBoard(CommandContext ctx)
         {
@@ -1417,6 +1424,25 @@ namespace DiscordBot
                 Description = SendString,
             });
             SendString = string.Empty;
+            List<UserGameSave> tempSave = new List<UserGameSave>();
+            tempSave.AddRange(bot.gameSaves);
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                tempSave[a].SetGames(tempSave[a].games.OrderByDescending(o => o.timeSpentPlaying.TotalHours).ToList());
+            }
+            tempSave = tempSave.OrderByDescending(o => o.games.Count > 0 ? o.games[0].timeSpentPlaying.TotalHours : 0).ToList();
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                for (int b = 0; b < tempSave[a].games.Count; b++)
+                {
+                    SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + temp[a].userName);
+                }
+            }
+            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            {
+                Title = "Game time leaderboard",
+                Description = SendString,
+            });
             GiveBotCoin(ctx);
         }
 
