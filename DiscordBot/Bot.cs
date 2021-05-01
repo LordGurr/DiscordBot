@@ -16,6 +16,7 @@ using System.Diagnostics;
 using HWND = System.IntPtr;
 using System.Xml.Serialization;
 using System.Threading;
+using Emzi0767.Utilities;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -24,8 +25,10 @@ namespace DiscordBot
 {
     public class Bot
     {
-        public static DiscordClient Client { get; private set; }
+        public DiscordClient Client { get; private set; }
         public CommandsNextExtension Commands { get; private set; }
+
+        private static DiscordClient statClient;
 
         public static Random rng = new Random();
         public static string[] gåtor;
@@ -52,7 +55,7 @@ namespace DiscordBot
 
         public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
-        private List<MemberToCheck> membersChecking = new List<MemberToCheck>();
+        public List<MemberToCheck> membersChecking = new List<MemberToCheck>();
         private DiscordChannel channelForOnlineMessage;
 
         //public VoiceNextExtension Voice { get; set; } //To play music
@@ -136,7 +139,7 @@ namespace DiscordBot
             //Utskrivet.Add(str);
             if (commandLine == null)
             {
-                var g = Client.GetChannelAsync(827869624808374293);
+                var g = statClient.GetChannelAsync(827869624808374293);
                 commandLine = g.Result;
             }
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -688,6 +691,7 @@ namespace DiscordBot
                {
                    await WriteLine(e.Message + "\n" + ex.Message);
                }
+               statClient = Client;
                if (e.Message.Content.ToLower().Contains("kommunism") || e.Message.Content.ToLower().Contains("communism"))
                    await e.Message.RespondAsync("All hail the motherland!").ConfigureAwait(false);
                else if (e.Message.Content.ToLower().Contains("när är"))
@@ -706,6 +710,8 @@ namespace DiscordBot
             await Reload();
             async Task Reload()
             {
+                AdventureCommands adventure;
+
                 DateTime dateTime = DateTime.Now;
                 //List<string> Utskrivet = new List<string>();
 
@@ -808,6 +814,7 @@ namespace DiscordBot
             //};
             Commands = Client.UseCommandsNext(commandsConfig);
             Commands.RegisterCommands<AdventureCommands>();
+
             //Voice = Client.UseVoiceNext(); //To play msucic
 
             await Client.ConnectAsync();
@@ -827,9 +834,16 @@ namespace DiscordBot
                 lastSave = DateTime.Now;
                 if (!stopAll)
                 {
-                    await SaveBotCoin();
-                    await SaveMembers();
-                    await CheckOnline();
+                    try
+                    {
+                        await SaveBotCoin();
+                        await SaveMembers();
+                        await CheckOnline();
+                    }
+                    catch (Exception e)
+                    {
+                        await WriteLine("Couldn't save: " + e.Message);
+                    }
                 }
             }
             await WriteLine("Shutting down.");
@@ -1420,6 +1434,43 @@ namespace DiscordBot
                     await WriteLine(e.Message);
                     return false;
                 }
+            }
+        }
+
+        private class UserGameSave
+        {
+            public List<GameTimeSave> games { private set; get; }
+            public ulong userId { private set; get; }
+
+            private UserGameSave(ulong _userId)
+            {
+                userId = _userId;
+                games = new List<GameTimeSave>();
+            }
+
+            private UserGameSave(ulong _userId, List<GameTimeSave> _games)
+            {
+                userId = _userId;
+                games = _games;
+            }
+        }
+
+        private class GameTimeSave
+        {
+            public TimeSpan timeSpentPlaying { private set; get; }
+            public string gameName { private set; get; }
+            //public ulong userId;
+
+            public GameTimeSave(string _gameName, TimeSpan _timeSpentPlaying)
+            {
+                gameName = _gameName;
+                //userId = _userId;
+                timeSpentPlaying = _timeSpentPlaying;
+            }
+
+            public void IncreaseTime(double minutes)
+            {
+                timeSpentPlaying.Add(new TimeSpan(0, 0, 0, 0, (int)Math.Round(minutes * 60000)));
             }
         }
 

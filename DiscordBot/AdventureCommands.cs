@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using static DiscordBot.Bot;
+using Emzi0767.Utilities;
 
 namespace DiscordBot
 {
@@ -26,8 +27,38 @@ namespace DiscordBot
 
         //private string SendString = "";
 
+        private string TimespanToString(TimeSpan uptime)
+        {
+            string SendString = string.Empty;
+            if (uptime.TotalDays >= 7)
+            {
+                SendString += WriteLine("Upptid: " + uptime.Days / 7 + " veckor " + uptime.Days % 7 + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            }
+            if (uptime.TotalDays >= 1)
+            {
+                SendString += WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            }
+            else if (uptime.TotalHours >= 1)
+            {
+                SendString += WriteLine("Upptid: " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            }
+            else if (uptime.TotalMinutes >= 1)
+            {
+                SendString += WriteLine("Upptid: " + uptime.Minutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+            }
+            else
+            {
+                SendString += WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+            }
+            return SendString;
+        }
+
         private string WriteLine(string str)
         {
+            if (str == null || str == string.Empty)
+            {
+                return string.Empty;
+            }
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(str);
             Console.ForegroundColor = ConsoleColor.White;
@@ -55,7 +86,7 @@ namespace DiscordBot
             await ctx.Channel.SendMessageAsync(str).ConfigureAwait(false);
             if (commandLine == null)
             {
-                var g = Client.GetChannelAsync(827869624808374293);
+                var g = bot.Client.GetChannelAsync(827869624808374293);
                 commandLine = g.Result;
             }
             if (commandLine != ctx.Channel)
@@ -189,9 +220,9 @@ namespace DiscordBot
         {
             string SendString = string.Empty;
             SendString += WriteLine("Program namn: " + System.AppDomain.CurrentDomain.FriendlyName/*, ctx*/);
-            SendString += WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
-            SendString += WriteLine("D#+ version: " + Client.VersionString/*, ctx*/);
-            SendString += WriteLine("Gateway version: " + Client.GatewayVersion/*, ctx*/);
+            SendString += WriteLine("Bot namn: " + bot.Client.CurrentApplication.Name/*, ctx*/);
+            SendString += WriteLine("D#+ version: " + bot.Client.VersionString/*, ctx*/);
+            SendString += WriteLine("Gateway version: " + bot.Client.GatewayVersion/*, ctx*/);
             SendString += WriteLine("Windows version: " + Environment.OSVersion/*, ctx*/);
             SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
             ScreenShootingShit screenShit = new ScreenShootingShit();
@@ -262,14 +293,14 @@ namespace DiscordBot
         public async Task BotInfo(CommandContext ctx)
         {
             string SendString = string.Empty;
-            SendString += WriteLine("Bot namn: " + Client.CurrentApplication.Name/*, ctx*/);
+            SendString += WriteLine("Bot namn: " + bot.Client.CurrentApplication.Name/*, ctx*/);
             //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
             //var a = Client.CurrentApplication.Team.Members.ToArray();
             //for (int i = 0; i < a.Length; i++)
             //{
             //    await WriteLine("Member " + (i + 1) + ": " + Client.CurrentApplication.Team.Members/*, ctx*/);
             //}
-            var b = Client.CurrentApplication.Owners.ToArray();
+            var b = bot.Client.CurrentApplication.Owners.ToArray();
             for (int i = 0; i < b.Length; i++)
             {
                 SendString += WriteLine("Owner " + (i + 1) + ": " + b[i].Username/*, ctx*/);
@@ -361,6 +392,7 @@ namespace DiscordBot
                 members += kanalerna[i].discordUsers.Count;
             }
             SendString += WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+            SendString += WriteLine("Har " + bot.membersChecking.Count + " användare som ska få online notiser");
             SendString += WriteLine("Sparade senast klockan " + bot.lastSave.ToShortTimeString() + ".");
             SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
@@ -389,6 +421,14 @@ namespace DiscordBot
         {
             await bot.CheckOnline(ctx.Channel);
             GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("allcommands")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Saves botcoin users.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task AllCommands(CommandContext ctx)
+        {
+            await ctx.RespondAsync(this.ToString());
         }
 
         //[DSharpPlus.CommandsNext.Attributes.Command("isonline")]
@@ -427,7 +467,15 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
         public async Task IsOnline(CommandContext ctx, [RemainingText] string idstring)
         {
-            List<string> idlist = idstring.Split(" ").ToList();
+            List<string> idlist = idstring.Split(' ', '\n').ToList();
+            //for (int i = 0; i < idlist.Count; i++)
+            //{
+            //    if (idlist[i].Length > 18)
+            //    {
+            //        idlist.AddRange(idstring.Split("\n").ToList());
+            //        idlist.RemoveAt(i);
+            //    }
+            //}
             List<ulong> ids = new List<ulong>();
             for (int i = 0; i < idlist.Count; i++)
             {
@@ -448,21 +496,12 @@ namespace DiscordBot
             {
                 try
                 {
-                    var user = Client.GetUserAsync(ids[i]);
+                    var user = bot.Client.GetUserAsync(ids[i]);
                     usersMentioned.Add(user.Result);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    try
-                    {
-                        var mem = ctx.Guild.GetMemberAsync(ids[i]);
-                        var user = Client.GetUserAsync(mem.Result.Id);
-                        usersMentioned.Add(user.Result);
-                    }
-                    catch (Exception e)
-                    {
-                        await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
-                    }
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
                 }
             }
             string SendString = string.Empty;
@@ -472,13 +511,73 @@ namespace DiscordBot
             }
             if (SendString == string.Empty)
             {
-                await ctx.Channel.SendMessageAsync("The ulongs weren't user id's.");
+                await ctx.Channel.SendMessageAsync("The ulongs weren't user id's or you didn't @ someone.");
             }
             else
             {
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
                     Title = "Is online",
+                    Description = SendString,
+                });
+            }
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("getactivity")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
+        public async Task GetActivity(CommandContext ctx, [RemainingText] string idstring)
+        {
+            List<string> idlist = idstring.Split(' ', '\n').ToList();
+            //for (int i = 0; i < idlist.Count; i++)
+            //{
+            //    if (idlist[i].Length > 18)
+            //    {
+            //        idlist.AddRange(idstring.Split("\n").ToList());
+            //        idlist.RemoveAt(i);
+            //    }
+            //}
+            List<ulong> ids = new List<ulong>();
+            for (int i = 0; i < idlist.Count; i++)
+            {
+                try
+                {
+                    if (!idlist[i].Contains('@'))
+                    {
+                        ids.Add(Convert.ToUInt64(idlist[i]));
+                    }
+                }
+                catch (Exception)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id.");
+                }
+            }
+            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                try
+                {
+                    var user = bot.Client.GetUserAsync(ids[i]);
+                    usersMentioned.Add(user.Result);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
+                }
+            }
+            string SendString = string.Empty;
+            for (int i = 0; i < usersMentioned.Count; i++)
+            {
+                SendString += WriteLine(ActivityString(usersMentioned[i]));
+            }
+            if (SendString == string.Empty)
+            {
+                await ctx.Channel.SendMessageAsync("The ulongs weren't user id's.");
+            }
+            else
+            {
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Activities",
                     Description = SendString,
                 });
             }
@@ -550,6 +649,42 @@ namespace DiscordBot
                         //channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
                         return discordUser.Username + " is not set";
                     }
+                }
+                else
+                {
+                    //await WriteLine(discordUser.Username + " is not set");
+                    //await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
+                    return discordUser.Username + " is not set";
+                }
+            }
+            catch (Exception e)
+            {
+                //await WriteLine(e.Message);
+                return discordUser.Username + " errored: " + e.Message;
+            }
+        }
+
+        private string ActivityString(DiscordUser discordUser)
+        {
+            try
+            {
+                if (discordUser.Presence != null)
+                {
+                    DiscordPresence presence = discordUser.Presence;
+                    if (presence.Activity != null)
+                    {
+                        string result = string.Empty;
+                        for (int i = 0; i < presence.Activities.Count; i++)
+                        {
+                            result += presence.Activities[i].ActivityType.ToString() + " " + presence.Activities[i].Name + "\n";
+                        }
+                        if (result == string.Empty)
+                        {
+                            return discordUser.Username + " is not doing anything";
+                        }
+                        return result.Insert(0, "\n" + discordUser.Username + " is: ");
+                    }
+                    return discordUser.Username + " is not set";
                 }
                 else
                 {
@@ -684,7 +819,7 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Command("directmessage")]
         [DSharpPlus.CommandsNext.Attributes.Description("Messages fucking everyone.")]
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-        public async Task DMa(CommandContext ctx, [RemainingText] string str)
+        public async Task DirectMessage(CommandContext ctx, [RemainingText] string str)
         {
             List<DiscordMember> membersToSpam = new List<DiscordMember>();
             for (int i = 0; i < kanalerna.Count; i++)
@@ -901,12 +1036,12 @@ namespace DiscordBot
                         await Task.Delay(5000);
                     }
                 }
-                await Client.DisconnectAsync();
+                await bot.Client.DisconnectAsync();
                 await Task.Delay(500);
                 await SaveAllbotcoin(ctx);
                 await SaveAllmembers(ctx);
                 await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
-                Client.Dispose();
+                bot.Client.Dispose();
                 await Task.Delay(500);
                 Environment.Exit(0);
             }
@@ -937,7 +1072,7 @@ namespace DiscordBot
                 await CommandWriteLine("Startar om inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nReboot är satt till " + bot.restart + ".", ctx);
                 shutdownTime = DateTime.Now.AddMinutes(bot.sparTid.TotalMinutes - temp.TotalMinutes);
                 await Activity(ctx, 2, "Rebooting " + shutdownTime.ToShortTimeString());
-                await Client.DisconnectAsync();
+                await bot.Client.DisconnectAsync();
                 //await TakeScreenshotAndUpload(e);
             }
             else
@@ -966,7 +1101,7 @@ namespace DiscordBot
                 await CommandWriteLine("Stänger ner inom " + (bot.sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")" + "\nKommer inte att starta igen.", ctx);
                 shutdownTime = DateTime.Now.AddMinutes(bot.sparTid.TotalMinutes - temp.TotalMinutes);
                 await Activity(ctx, 2, "Shutdown " + shutdownTime.ToShortTimeString());
-                await Client.DisconnectAsync();
+                await bot.Client.DisconnectAsync();
                 //await TakeScreenshotAndUpload(e);
             }
             else
@@ -1030,7 +1165,7 @@ namespace DiscordBot
             };
             try
             {
-                await Client.UpdateStatusAsync(activity);
+                await bot.Client.UpdateStatusAsync(activity);
                 if (activity.ActivityType == ActivityType.Custom)
                 {
                     await ctx.RespondAsync(activity.CustomStatus.Name + "  " + activity.CustomStatus.Emoji);
@@ -1623,7 +1758,7 @@ namespace DiscordBot
             }
             if (ctx.Member.Hierarchy < int.MaxValue)
             {
-                var a = Client.CurrentApplication.Owners.ToArray();
+                var a = bot.Client.CurrentApplication.Owners.ToArray();
                 bool found = false;
                 for (int i = 0; i < a.Length; i++)
                 {
@@ -1762,7 +1897,7 @@ namespace DiscordBot
             }
             if (ctx.Member.Hierarchy < int.MaxValue)
             {
-                var a = Client.CurrentApplication.Owners.ToArray();
+                var a = bot.Client.CurrentApplication.Owners.ToArray();
                 bool found = false;
                 for (int i = 0; i < a.Length; i++)
                 {
