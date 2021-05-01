@@ -717,6 +717,7 @@ namespace DiscordBot
             async Task Reload()
             {
                 DateTime dateTime = DateTime.Now;
+                statClient = Client;
                 //List<string> Utskrivet = new List<string>();
 
                 //Utskrivet.Add("Finns på " + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
@@ -994,9 +995,8 @@ namespace DiscordBot
                     string[] temp = tempArray[i].Split(" ");
 
                     ulong id = (ulong)Convert.ToDecimal(temp[0]);
-                    string name = temp[1];
                     List<GameTimeSave> games = new List<GameTimeSave>();
-                    for (int a = 2; a < temp.Length; a += 2)
+                    for (int a = 1; a < temp.Length; a += 2)
                     {
                         string gameName = temp[a];
                         TimeSpan timeSpan = TimeSpan.Parse(temp[a + 1]);
@@ -1004,7 +1004,7 @@ namespace DiscordBot
                     }
                     if (!gameSaves.Any(a => a.userId == id))
                     {
-                        gameSaves.Add(new UserGameSave(id, games, name));
+                        gameSaves.Add(new UserGameSave(id, games));
                     }
                 }
                 catch (Exception e)
@@ -1016,7 +1016,7 @@ namespace DiscordBot
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
         }
 
-        private async Task UpdateGameSaves()
+        public async Task UpdateGameSaves()
         {
             for (int i = 0; i < gameSaves.Count; i++)
             {
@@ -1049,7 +1049,7 @@ namespace DiscordBot
             {
                 for (int i = 0; i < gameSaves.Count; i++)
                 {
-                    string saveString = Convert.ToString(gameSaves[i].userId + " " + gameSaves[i].name);
+                    string saveString = Convert.ToString(gameSaves[i].userId);
                     for (int a = 0; a < gameSaves[i].games.Count; a++)
                     {
                         saveString += " " + gameSaves[i].games[a].gameName + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
@@ -1065,7 +1065,7 @@ namespace DiscordBot
                     totalGames++;
                 }
             }
-            await WriteLine("Sparade alla " + gameSaves.Count + " gamesaves användares " + totalGames + " spel.");
+            await WriteLine("Sparade alla " + gameSaves.Count + " gamesaves användare och " + totalGames + " spel.");
         }
 
         public static void GiveBotCoin(CommandContext ctx)
@@ -1557,10 +1557,9 @@ namespace DiscordBot
         {
             public List<GameTimeSave> games { private set; get; }
             public ulong userId { private set; get; }
-            public ulong name { private set; get; }
             public DiscordUser user { private set; get; }
 
-            public UserGameSave(ulong _userId, string _name)
+            public UserGameSave(ulong _userId)
             {
                 userId = _userId;
                 games = new List<GameTimeSave>();
@@ -1568,7 +1567,7 @@ namespace DiscordBot
                 user = task.Result;
             }
 
-            public UserGameSave(ulong _userId, List<GameTimeSave> _games, string _name)
+            public UserGameSave(ulong _userId, List<GameTimeSave> _games)
             {
                 userId = _userId;
                 games = _games;

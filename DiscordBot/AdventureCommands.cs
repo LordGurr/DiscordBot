@@ -401,7 +401,7 @@ namespace DiscordBot
                     totalGames++;
                 }
             }
-            SendString += WriteLine("Har " + bot.gameSaves.Count + " gamesaves användares " + totalGames + " spel sparade.");
+            SendString += WriteLine("Har " + bot.gameSaves.Count + " gamesaves användare och " + totalGames + " spel sparade.");
             SendString += WriteLine("Har " + bot.membersChecking.Count + " användare som ska få online notiser");
             SendString += WriteLine("Sparade senast klockan " + bot.lastSave.ToShortTimeString() + ".");
             SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
@@ -1346,10 +1346,11 @@ namespace DiscordBot
             }
             botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
             await ctx.Channel.SendMessageAsync("Du är nu uppskriven för botcoin och har: " + botCoinSaves[botCoinSaves.Count - 1].antalBotCoin + " botcoins.").ConfigureAwait(false);
+            GiveBotCoin(ctx);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("gametime")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
         public async Task GameTime(CommandContext ctx)
         {
             int i = bot.GameTimeIndex(ctx);
@@ -1358,8 +1359,27 @@ namespace DiscordBot
                 await ctx.Channel.SendMessageAsync("Du är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
                 return;
             }
-            botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
+            bot.gameSaves.Add(new UserGameSave(ctx.Message.Author.Id));
             await ctx.Channel.SendMessageAsync("Du är nu uppskriven för gametime och så fort du börjar spela ett spel borde det registreras.").ConfigureAwait(false);
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("updategamesaves")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task UpdateGameTime(CommandContext ctx)
+        {
+            await bot.UpdateGameSaves();
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("savegamesaves")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task SaveGameTime(CommandContext ctx)
+        {
+            await bot.SaveGameSaves();
+            GiveBotCoin(ctx);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
@@ -1397,6 +1417,7 @@ namespace DiscordBot
                 Description = SendString,
             });
             SendString = string.Empty;
+            GiveBotCoin(ctx);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("remindme")]
