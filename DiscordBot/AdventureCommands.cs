@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using static DiscordBot.Bot;
-using Emzi0767.Utilities;
 
 namespace DiscordBot
 {
@@ -27,28 +26,28 @@ namespace DiscordBot
 
         //private string SendString = "";
 
-        private string TimespanToString(TimeSpan uptime)
+        private string TimespanToString(TimeSpan span)
         {
             string SendString = string.Empty;
-            if (uptime.TotalDays >= 7)
+            if (span.TotalDays > 7)
             {
-                SendString += WriteLine("Upptid: " + uptime.Days / 7 + " veckor " + uptime.Days % 7 + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                SendString += span.Days / 7 + " veckor " + span.Days % 7 + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
-            if (uptime.TotalDays >= 1)
+            if (span.TotalDays >= 1)
             {
-                SendString += WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                SendString += span.Days + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
-            else if (uptime.TotalHours >= 1)
+            else if (span.TotalHours >= 1)
             {
-                SendString += WriteLine("Upptid: " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+                SendString += span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
-            else if (uptime.TotalMinutes >= 1)
+            else if (span.TotalMinutes >= 1)
             {
-                SendString += WriteLine("Upptid: " + uptime.Minutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+                SendString += span.Minutes + " minuter " + (int)span.Seconds + " sekunder "/*, ctx*/;
             }
             else
             {
-                SendString += WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+                SendString += (int)span.TotalSeconds + " sekunder "/*, ctx*/;
             }
             return SendString;
         }
@@ -238,22 +237,23 @@ namespace DiscordBot
             SendString += WriteLine("Kommando rad: " + "\"" + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + "\""/*, ctx*/);
 
             TimeSpan uptime = TimeSpan.FromMilliseconds(Environment.TickCount);
-            if (uptime.TotalDays >= 1)
-            {
-                SendString += WriteLine("Tid sen full nedstängning: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
-            }
-            else if (uptime.TotalHours >= 1)
-            {
-                SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
-            }
-            else if (uptime.TotalMinutes >= 1)
-            {
-                SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
-            }
-            else
-            {
-                SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
-            }
+            SendString += WriteLine("Tid sen full nedstängning: " + TimespanToString(uptime)/*, ctx*/);
+            //if (uptime.TotalDays >= 1)
+            //{
+            //    SendString += WriteLine("Tid sen full nedstängning: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            //}
+            //else if (uptime.TotalHours >= 1)
+            //{
+            //    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            //}
+            //else if (uptime.TotalMinutes >= 1)
+            //{
+            //    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+            //}
+            //else
+            //{
+            //    SendString += WriteLine("Tid sen full nedstängning: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+            //}
 
             SendString += WriteLine("Antal processor kärnor: " + Environment.ProcessorCount/*, ctx*/);
             SendString += WriteLine(Environment.Is64BitOperatingSystem ? "64 bitars operativ system" : "32 eller färre bitars operativ system"/*, ctx*/);
@@ -305,23 +305,24 @@ namespace DiscordBot
             {
                 SendString += WriteLine("Owner " + (i + 1) + ": " + b[i].Username/*, ctx*/);
             }
-            TimeSpan uptime = bot.sw.Elapsed;
-            if (uptime.TotalDays >= 1)
-            {
-                SendString += WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
-            }
-            else if (uptime.TotalHours >= 1)
-            {
-                SendString += WriteLine("Upptid: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
-            }
-            else if (uptime.TotalMinutes >= 1)
-            {
-                SendString += WriteLine("Upptid: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
-            }
-            else
-            {
-                SendString += WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
-            }
+            TimeSpan uptime = bot.runTime.Elapsed;
+            SendString += WriteLine("Upptid: " + TimespanToString(uptime)/*, ctx*/);
+            //if (uptime.TotalDays >= 1)
+            //{
+            //    SendString += WriteLine("Upptid: " + uptime.Days + " dagar " + uptime.Hours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            //}
+            //else if (uptime.TotalHours >= 1)
+            //{
+            //    SendString += WriteLine("Upptid: " + (int)uptime.TotalHours + " timmar " + uptime.Minutes + " minuter"/*, ctx*/);
+            //}
+            //else if (uptime.TotalMinutes >= 1)
+            //{
+            //    SendString += WriteLine("Upptid: " + (int)uptime.TotalMinutes + " minuter " + (int)uptime.Seconds + " sekunder "/*, ctx*/);
+            //}
+            //else
+            //{
+            //    SendString += WriteLine("Upptid: " + (int)uptime.TotalSeconds + " sekunder "/*, ctx*/);
+            //}
             using (HttpClient client = new HttpClient())
             {
                 try
@@ -392,6 +393,15 @@ namespace DiscordBot
                 members += kanalerna[i].discordUsers.Count;
             }
             SendString += WriteLine("Har " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+            int totalGames = 0;
+            for (int i = 0; i < bot.gameSaves.Count; i++)
+            {
+                for (int a = 0; a < bot.gameSaves[i].games.Count; a++)
+                {
+                    totalGames++;
+                }
+            }
+            SendString += WriteLine("Har " + bot.gameSaves.Count + " gamesaves användares " + totalGames + " spel sparade.");
             SendString += WriteLine("Har " + bot.membersChecking.Count + " användare som ska få online notiser");
             SendString += WriteLine("Sparade senast klockan " + bot.lastSave.ToShortTimeString() + ".");
             SendString += WriteLine("[Github repository](https://github.com/LordGurr/DiscordBot)");
@@ -1336,6 +1346,20 @@ namespace DiscordBot
             }
             botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
             await ctx.Channel.SendMessageAsync("Du är nu uppskriven för botcoin och har: " + botCoinSaves[botCoinSaves.Count - 1].antalBotCoin + " botcoins.").ConfigureAwait(false);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("gametime")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task GameTime(CommandContext ctx)
+        {
+            int i = bot.GameTimeIndex(ctx);
+            if (i > -1)
+            {
+                await ctx.Channel.SendMessageAsync("Du är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
+                return;
+            }
+            botCoinSaves.Add(new BotCoinSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
+            await ctx.Channel.SendMessageAsync("Du är nu uppskriven för gametime och så fort du börjar spela ett spel borde det registreras.").ConfigureAwait(false);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]

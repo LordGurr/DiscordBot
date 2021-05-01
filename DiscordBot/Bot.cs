@@ -16,7 +16,6 @@ using System.Diagnostics;
 using HWND = System.IntPtr;
 using System.Xml.Serialization;
 using System.Threading;
-using Emzi0767.Utilities;
 
 //using DSharpPlus.VoiceNext;
 //using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
@@ -48,7 +47,7 @@ namespace DiscordBot
         public bool restart = true;
         public DateTime lastSave;
         public TimeSpan sparTid;
-        public Stopwatch sw;
+        public Stopwatch runTime;
         public bool stopAll = false;
 
         public const string tempImagePng = "screenshotTemp.png";
@@ -57,6 +56,8 @@ namespace DiscordBot
 
         public List<MemberToCheck> membersChecking = new List<MemberToCheck>();
         private DiscordChannel channelForOnlineMessage;
+
+        public List<UserGameSave> gameSaves = new List<UserGameSave>();
 
         //public VoiceNextExtension Voice { get; set; } //To play music
         public async Task CheckOnline()
@@ -632,16 +633,21 @@ namespace DiscordBot
                     }
                 }
             }
-            sw.Stop();
-            await WriteLine("Det borde stå att alla medlemmar blivit inlästa och det tog " + sw.Elapsed.TotalSeconds + " sekunder.");
+            await WriteLine("Det borde stå att alla medlemmar blivit inlästa och det tog " + runTime.Elapsed.TotalSeconds + " sekunder.");
             await CheckOnlineWithoutSend();
+            var activity = new DiscordActivity
+            {
+                Name = "John Conway's game of life",
+                ActivityType = ActivityType.Streaming,
+            };
+            await Client.UpdateStatusAsync(activity);
         }
 
         public async Task RunAsync()
         {
             AdventureCommands.bot = this;
-            sw = new Stopwatch();
-            sw.Start();
+            runTime = new Stopwatch();
+            runTime.Start();
             Environment.CurrentDirectory = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty);
             restart = true;
             var json = string.Empty;
@@ -710,8 +716,6 @@ namespace DiscordBot
             await Reload();
             async Task Reload()
             {
-                AdventureCommands adventure;
-
                 DateTime dateTime = DateTime.Now;
                 //List<string> Utskrivet = new List<string>();
 
@@ -751,6 +755,16 @@ namespace DiscordBot
                     members += kanalerna[i].discordUsers.Count;
                 }
                 await WriteLine("Har läst in " + kanalerna.Count + " kanaler och " + members + " medlemmar");
+                await ReadGameSaves();
+                int totalGames = 0;
+                for (int i = 0; i < gameSaves.Count; i++)
+                {
+                    for (int a = 0; a < gameSaves[i].games.Count; a++)
+                    {
+                        totalGames++;
+                    }
+                }
+                await WriteLine("Har läst in " + gameSaves.Count + " användares " + totalGames + " spel.");
                 await ReadCheckMemebers();
                 await WriteLine("Har läst in " + membersChecking.Count + " som ska få online notiser");
                 TimeSpan timeSpan = DateTime.Now - dateTime;
@@ -830,8 +844,8 @@ namespace DiscordBot
             //Client.
             while (!shutdown)
             {
-                await Task.Delay(Convert.ToInt32(sparTid.TotalMilliseconds));
                 lastSave = DateTime.Now;
+                await Task.Delay(Convert.ToInt32(sparTid.TotalMilliseconds));
                 if (!stopAll)
                 {
                     try
@@ -839,6 +853,8 @@ namespace DiscordBot
                         await SaveBotCoin();
                         await SaveMembers();
                         await CheckOnline();
+                        await UpdateGameSaves();
+                        await SaveGameSaves();
                     }
                     catch (Exception e)
                     {
@@ -964,6 +980,94 @@ namespace DiscordBot
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
         }
 
+        private async Task ReadGameSaves()
+        {
+            gameSaves = new List<UserGameSave>();
+            string[] tempArray = await File.ReadAllLinesAsync("usergamesaves.txt");
+
+            for (int i = 0; i < tempArray.Length; i++)
+            {
+                //if (IsDigitsOnly(tempArray[i], ":-"))
+                //{
+                try
+                {
+                    string[] temp = tempArray[i].Split(" ");
+
+                    ulong id = (ulong)Convert.ToDecimal(temp[0]);
+                    string name = temp[1];
+                    List<GameTimeSave> games = new List<GameTimeSave>();
+                    for (int a = 2; a < temp.Length; a += 2)
+                    {
+                        string gameName = temp[a];
+                        TimeSpan timeSpan = TimeSpan.Parse(temp[a + 1]);
+                        games.Add(new GameTimeSave(gameName, timeSpan));
+                    }
+                    if (!gameSaves.Any(a => a.userId == id))
+                    {
+                        gameSaves.Add(new UserGameSave(id, games, name));
+                    }
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                }
+                //}
+            }
+            //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
+        }
+
+        private async Task UpdateGameSaves()
+        {
+            for (int i = 0; i < gameSaves.Count; i++)
+            {
+                if (gameSaves[i].user.Presence != null)
+                {
+                    DiscordPresence presence = gameSaves[i].user.Presence;
+                    for (int a = 0; a < presence.Activities.Count; a++)
+                    {
+                        if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                        {
+                            int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                            TimeSpan timeSpan = DateTime.Now - lastSave;
+                            if (index >= 0)
+                            {
+                                gameSaves[i].games[index].IncreaseTime(timeSpan.TotalMinutes);
+                            }
+                            else
+                            {
+                                gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public async Task SaveGameSaves()
+        {
+            using (TextWriter tw = new StreamWriter("usergamesaves.txt"))
+            {
+                for (int i = 0; i < gameSaves.Count; i++)
+                {
+                    string saveString = Convert.ToString(gameSaves[i].userId + " " + gameSaves[i].name);
+                    for (int a = 0; a < gameSaves[i].games.Count; a++)
+                    {
+                        saveString += " " + gameSaves[i].games[a].gameName + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
+                    }
+                    tw.WriteLine(saveString);
+                }
+            }
+            int totalGames = 0;
+            for (int i = 0; i < gameSaves.Count; i++)
+            {
+                for (int a = 0; a < gameSaves[i].games.Count; a++)
+                {
+                    totalGames++;
+                }
+            }
+            await WriteLine("Sparade alla " + gameSaves.Count + " gamesaves användares " + totalGames + " spel.");
+        }
+
         public static void GiveBotCoin(CommandContext ctx)
         {
             int i = BotCoinIndex(ctx);
@@ -1028,6 +1132,18 @@ namespace DiscordBot
 
             // and perform the sudo
             cmds.ExecuteCommandAsync(fakeContext);
+            return -1;
+        }
+
+        public int GameTimeIndex(CommandContext ctx)
+        {
+            for (int i = 0; i < gameSaves.Count; i++)
+            {
+                if (gameSaves[i].userId == ctx.Message.Author.Id)
+                {
+                    return i;
+                }
+            }
             return -1;
         }
 
@@ -1437,25 +1553,31 @@ namespace DiscordBot
             }
         }
 
-        private class UserGameSave
+        public class UserGameSave
         {
             public List<GameTimeSave> games { private set; get; }
             public ulong userId { private set; get; }
+            public ulong name { private set; get; }
+            public DiscordUser user { private set; get; }
 
-            private UserGameSave(ulong _userId)
+            public UserGameSave(ulong _userId, string _name)
             {
                 userId = _userId;
                 games = new List<GameTimeSave>();
+                var task = statClient.GetUserAsync(userId);
+                user = task.Result;
             }
 
-            private UserGameSave(ulong _userId, List<GameTimeSave> _games)
+            public UserGameSave(ulong _userId, List<GameTimeSave> _games, string _name)
             {
                 userId = _userId;
                 games = _games;
+                var task = statClient.GetUserAsync(userId);
+                user = task.Result;
             }
         }
 
-        private class GameTimeSave
+        public class GameTimeSave
         {
             public TimeSpan timeSpentPlaying { private set; get; }
             public string gameName { private set; get; }
