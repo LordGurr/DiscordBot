@@ -110,14 +110,17 @@ namespace DiscordBot
 
         public async Task CheckOnlineWithoutSend()
         {
+            string SendString = string.Empty;
             for (int i = 0; i < membersChecking.Count; i++)
             {
                 var task = membersChecking[i].Online();
+                SendString += task.Result.Item2 + "\n";
                 if (membersChecking[i].online != task.Result.Item1)
                 {
                     membersChecking[i].online = task.Result.Item1;
                 }
             }
+            await WriteLine(SendString);
         }
 
         private async Task ReadCheckMemebers()
@@ -1468,44 +1471,48 @@ namespace DiscordBot
                             else if (presence.Status == UserStatus.Invisible)
                             {
                                 //await WriteLine(discordUser.Username + " is trying to hide");
-                                return (true, discordUser.Username + " is trying to hide");
+                                return (false, discordUser.Username + " is trying to hide");
                             }
                             else if (presence.Status == UserStatus.Idle)
                             {
                                 //await WriteLine(discordUser.Username + " is afk");
                                 return (true, discordUser.Username + " is afk");
                             }
+                            else if (presence.Status == UserStatus.DoNotDisturb)
+                            {
+                                return (true, discordUser.Username + " doesn't want to be disturbed");
+                            }
                         }
-                        if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
-                        {
-                            //await WriteLine(discordUser.Username + " is not set");
-                            return (false, discordUser.Username + " is not set");
-                        }
-                        if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
-                        {
-                            //await WriteLine(discordUser.Username + " is online");
-                            return (true, discordUser.Username + " is online");
-                        }
-                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Offline || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Offline || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Offline)
-                        {
-                            //await WriteLine(discordUser.Username + " is offline");
-                            return (false, discordUser.Username + " is offline");
-                        }
-                        else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
-                        {
-                            //await WriteLine(discordUser.Username + " is trying to hide");
-                            return (true, discordUser.Username + " is trying to hide");
-                        }
-                        else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
-                        {
-                            //await WriteLine(discordUser.Username + " is trying to hide");
-                            return (false, discordUser.Username + " is trying to hide");
-                        }
-                        else
-                        {
-                            //await WriteLine(discordUser.Username + " is not set");
-                            return (false, discordUser.Username + " is not set");
-                        }
+                        //if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
+                        //{
+                        //    //await WriteLine(discordUser.Username + " is not set");
+                        //    return (false, discordUser.Username + " is not set");
+                        //}
+                        //if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
+                        //{
+                        //    //await WriteLine(discordUser.Username + " is online");
+                        //    return (true, discordUser.Username + " is online");
+                        //}
+                        //else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Offline || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Offline || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Offline)
+                        //{
+                        //    //await WriteLine(discordUser.Username + " is offline");
+                        //    return (false, discordUser.Username + " is offline");
+                        //}
+                        //else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
+                        //{
+                        //    //await WriteLine(discordUser.Username + " is trying to hide");
+                        //    return (true, discordUser.Username + " is trying to hide");
+                        //}
+                        //else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
+                        //{
+                        //    //await WriteLine(discordUser.Username + " is trying to hide");
+                        //    return (false, discordUser.Username + " is trying to hide");
+                        //}
+                        //else
+                        //{
+                        //await WriteLine(discordUser.Username + " is not set");
+                        return (false, discordUser.Username + " is not set");
+                        //}
                     }
                     else
                     {
@@ -1532,21 +1539,36 @@ namespace DiscordBot
                             if (presence.Status == UserStatus.Online)
                             {
                                 await WriteLine(discordUser.Username + " is online");
+                                if (channel != commandLine)
+                                    await channel.SendMessageAsync(discordUser.Username + " is online").ConfigureAwait(false);
                                 return true;
                             }
                             else if (presence.Status == UserStatus.Offline)
                             {
                                 await WriteLine(discordUser.Username + " is offline");
+                                if (channel != commandLine)
+                                    await channel.SendMessageAsync(discordUser.Username + " is offline").ConfigureAwait(false);
                                 return false;
                             }
                             else if (presence.Status == UserStatus.Invisible)
                             {
                                 await WriteLine(discordUser.Username + " is trying to hide");
-                                return true;
+                                if (channel != commandLine)
+                                    await channel.SendMessageAsync(discordUser.Username + " is trying to hide").ConfigureAwait(false);
+                                return false;
                             }
                             else if (presence.Status == UserStatus.Idle)
                             {
                                 await WriteLine(discordUser.Username + " is afk");
+                                if (channel != commandLine)
+                                    await channel.SendMessageAsync(discordUser.Username + " is afk").ConfigureAwait(false);
+                                return true;
+                            }
+                            else if (presence.Status == UserStatus.DoNotDisturb)
+                            {
+                                await WriteLine(discordUser.Username + " doesn't want to be disturbed");
+                                if (channel != commandLine)
+                                    await channel.SendMessageAsync(discordUser.Username + " doesn't want to be disturbed").ConfigureAwait(false);
                                 return true;
                             }
                         }
@@ -1611,6 +1633,8 @@ namespace DiscordBot
                 catch (Exception e)
                 {
                     await WriteLine(e.Message);
+                    if (channel != commandLine)
+                        await channel.SendMessageAsync(e.Message).ConfigureAwait(false);
                     return false;
                 }
             }

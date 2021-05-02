@@ -42,7 +42,7 @@ namespace DiscordBot
             }
             else if (span.TotalMinutes >= 1)
             {
-                return span.Minutes + " minuter " + (int)span.Seconds + " sekunder "/*, ctx*/;
+                return span.Minutes + " minuter " + (int)span.Seconds + " sekunder" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
             }
             else
             {
@@ -1542,7 +1542,10 @@ namespace DiscordBot
                     //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
                     SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
                 }
-                SendString += WriteLine(" ");
+                if (tempSave[a].games.Count > 0)
+                {
+                    SendString += WriteLine(" ");
+                }
             }
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {
@@ -1553,9 +1556,40 @@ namespace DiscordBot
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("leaderboard", "gameleader", "gameboard", "leader", "board")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("gameleader", "gameboard", "leader", "board")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task GameLeaderboard(CommandContext ctx)
+        {
+            string SendString = string.Empty;
+            List<(GameTimeSave, string)> tempSave = new List<(GameTimeSave, string)>();
+            for (int i = 0; i < bot.gameSaves.Count; i++)
+            {
+                for (int a = 0; a < bot.gameSaves[i].games.Count; a++)
+                {
+                    tempSave.Add((bot.gameSaves[i].games[a], bot.gameSaves[i].user.Username));
+                }
+            }
+            //tempSave.AddRange(bot.gameSaves);
+            tempSave = tempSave.OrderByDescending(o => o.Item1.timeSpentPlaying.TotalHours).ToList();
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
+                SendString += WriteLine(TimespanToShortString(tempSave[a].Item1.timeSpentPlaying) + " " + tempSave[a].Item1.gameName + " " + tempSave[a].Item2);
+
+                //SendString += WriteLine(" ");
+            }
+            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            {
+                Title = "Game time leaderboard",
+                Description = SendString,
+            });
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("leaderboardusersort")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("gameleaderusersort", "gameboardusersort", "leaderusersort", "boardusersort", "leaderboarduser", "gameleaderuser", "gameboarduser", "leaderuser", "boarduser")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task GameLeaderboardUserSort(CommandContext ctx)
         {
             string SendString = string.Empty;
             List<UserGameSave> tempSave = new List<UserGameSave>();
