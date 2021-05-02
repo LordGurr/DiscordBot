@@ -30,19 +30,19 @@ namespace DiscordBot
         {
             if (span.TotalDays > 7)
             {
-                return span.Days / 7 + " veckor " + span.Days % 7 + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Days / 7 + " veck" + (span.Days / 7 > 1 ? "or " : "a ") + span.Days % 7 + " dag " + (span.Days % 7 > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalDays >= 1)
             {
-                return span.Days + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Days + " dag" + (span.Days > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalHours >= 1)
             {
-                return span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalMinutes >= 1)
             {
-                return span.Minutes + " minuter " + (int)span.Seconds + " sekunder" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
+                return span.Minutes + " minut" + (span.Minutes > 1 ? "er " : " ") + (int)span.Seconds + " sekund" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
             }
             else
             {
