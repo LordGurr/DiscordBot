@@ -30,7 +30,7 @@ namespace DiscordBot
         {
             if (span.TotalDays > 7)
             {
-                return span.Days / 7 + " veck" + (span.Days / 7 > 1 ? "or " : "a ") + span.Days % 7 + " dag " + (span.Days % 7 > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
+                return span.Days / 7 + " veck" + (span.Days / 7 > 1 ? "or " : "a ") + span.Days % 7 + " dag" + (span.Days % 7 > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalDays >= 1)
             {
