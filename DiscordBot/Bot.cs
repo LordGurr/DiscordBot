@@ -1030,44 +1030,54 @@ namespace DiscordBot
         {
             for (int i = 0; i < gameSaves.Count; i++)
             {
-                if (gameSaves[i].user.Presence != null)
+                try
                 {
-                    DiscordPresence presence = gameSaves[i].user.Presence;
-                    if (presence.Activities.Count > 0)
+                    if (gameSaves[i].user.Presence != null)
                     {
-                        for (int a = 0; a < presence.Activities.Count; a++)
+                        DiscordPresence presence = gameSaves[i].user.Presence;
+                        if (presence != null)
                         {
-                            if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                            if (presence.Activities.Count > 0)
                             {
-                                int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
-                                TimeSpan timeSpan = DateTime.Now - lastSave;
-                                if (index >= 0)
+                                for (int a = 0; a < presence.Activities.Count; a++)
                                 {
-                                    gameSaves[i].games[index].IncreaseTime(timeSpan);
+                                    if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                                    {
+                                        int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                                        TimeSpan timeSpan = DateTime.Now - lastSave;
+                                        if (index >= 0)
+                                        {
+                                            gameSaves[i].games[index].IncreaseTime(timeSpan);
+                                        }
+                                        else
+                                        {
+                                            gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                                        }
+                                    }
                                 }
-                                else
-                                {
-                                    gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (presence.Activity.ActivityType == ActivityType.Playing)
-                        {
-                            int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
-                            TimeSpan timeSpan = DateTime.Now - lastSave;
-                            if (index >= 0)
-                            {
-                                gameSaves[i].games[index].IncreaseTime(timeSpan);
                             }
                             else
                             {
-                                gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
+                                if (presence.Activity.ActivityType == ActivityType.Playing)
+                                {
+                                    int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
+                                    TimeSpan timeSpan = DateTime.Now - lastSave;
+                                    if (index >= 0)
+                                    {
+                                        gameSaves[i].games[index].IncreaseTime(timeSpan);
+                                    }
+                                    else
+                                    {
+                                        gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
+                                    }
+                                }
                             }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    await WriteLine("On updating " + gameSaves[i].user.Username + " it errorerd: " + e.Message);
                 }
             }
         }

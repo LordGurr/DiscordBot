@@ -52,6 +52,24 @@ namespace DiscordBot
             return SendString;
         }
 
+        private string TimespanToShortString(TimeSpan span)
+        {
+            string SendString = string.Empty;
+            if (span.TotalDays > 7)
+            {
+                SendString += span.Days / 7 + ":" + span.Days % 7 + ":" + span.Hours + ":" + span.Minutes/*, ctx*/;
+            }
+            if (span.TotalDays >= 1)
+            {
+                SendString += span.Days + ":" + span.Hours + ":" + span.Minutes/*, ctx*/;
+            }
+            else
+            {
+                SendString += span.Hours + ":" + span.Minutes/*, ctx*/;
+            }
+            return SendString;
+        }
+
         private string WriteLine(string str)
         {
             if (str == null || str == string.Empty)
@@ -1157,6 +1175,71 @@ namespace DiscordBot
             await cmds.ExecuteCommandAsync(fakeContext);
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("sudo")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Executes a command as another user.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task Sudo(CommandContext ctx, [RemainingText, DSharpPlus.CommandsNext.Attributes.Description("Command text to execute.")] string command)
+        {
+            List<string> idlist = command.Split(' ', '\n').ToList();
+            List<ulong> ids = new List<ulong>();
+            for (int i = 0; i < idlist.Count; i++)
+            {
+                try
+                {
+                    if (!idlist[i].Contains('@') && IsDigitsOnly(idlist[i], string.Empty))
+                    {
+                        ids.Add(Convert.ToUInt64(idlist[i]));
+                    }
+                }
+                catch (Exception)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid ulong.");
+                }
+            }
+            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                try
+                {
+                    var user = bot.Client.GetUserAsync(ids[i]);
+                    usersMentioned.Add(user.Result);
+                    command = command.Replace(ids[i].ToString(), string.Empty);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
+                }
+            }
+            // note the [RemainingText] attribute on the argument.
+            // it will capture all the text passed to the command
+
+            // let's trigger a typing indicator to let
+            // users know we're working
+            await ctx.TriggerTypingAsync();
+
+            // get the command service, we need this for
+            // sudo purposes
+            var cmds = ctx.CommandsNext;
+            // retrieve the command and its arguments from the given string
+            var cmd = cmds.FindCommand(command, out var customArgs);
+            //for (int i = 1; i < command.Length; i++)
+            //{
+            //    customArgs += command[i] + " ";
+            //}
+            // create a fake CommandContext
+            for (int i = 0; i < usersMentioned.Count; i++)
+            {
+                var fakeContext = cmds.CreateFakeContext(usersMentioned[i], ctx.Channel, command, ctx.Prefix, cmd, customArgs);
+                await cmds.ExecuteCommandAsync(fakeContext);
+            }
+            if (usersMentioned.Count < 1)
+            {
+                await ctx.RespondAsync("Didn't get any users");
+            }
+
+            // and perform the sudo
+        }
+
         [DSharpPlus.CommandsNext.Attributes.Command("activity")]
         [DSharpPlus.CommandsNext.Attributes.Aliases("aktivitet")]
         [DSharpPlus.CommandsNext.Attributes.Description("Sets game bot is playing.")]
@@ -1357,11 +1440,18 @@ namespace DiscordBot
             int i = bot.GameTimeIndex(ctx);
             if (i > -1)
             {
-                await ctx.Channel.SendMessageAsync("Du är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(ctx.User.Username + " är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
                 return;
             }
-            bot.gameSaves.Add(new UserGameSave(ctx.Message.Author.Id));
-            await ctx.Channel.SendMessageAsync("Du är nu uppskriven för gametime och så fort du börjar spela ett spel borde det registreras.").ConfigureAwait(false);
+            if (!ctx.User.IsBot)
+            {
+                bot.gameSaves.Add(new UserGameSave(ctx.Message.Author.Id));
+                await ctx.Channel.SendMessageAsync(ctx.User.Username + " är nu uppskriven för gametime och så fort du börjar spela ett spel borde det registreras.").ConfigureAwait(false);
+            }
+            else
+            {
+                await ctx.Channel.SendMessageAsync(ctx.User.Username + " får inte skriva upp sig för gametime då du är en bot").ConfigureAwait(false);
+            }
             GiveBotCoin(ctx);
         }
 
@@ -1389,8 +1479,8 @@ namespace DiscordBot
             await ctx.RespondAsync("Last time saved was: " + bot.lastSave.ToShortTimeString());
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("botcoinleaderboard", "botcoinleader", "botcoinboard")]
+        [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("botcoinleader", "botcoinboard")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task BotCoinLeaderBoard(CommandContext ctx)
         {
@@ -1423,7 +1513,15 @@ namespace DiscordBot
                 Title = "Leaderboard",
                 Description = SendString,
             });
-            SendString = string.Empty;
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("gameleaderboard", "gameleader", "gameboard")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task GameLeaderboard(CommandContext ctx)
+        {
+            string SendString = string.Empty;
             List<UserGameSave> tempSave = new List<UserGameSave>();
             tempSave.AddRange(bot.gameSaves);
             for (int a = 0; a < tempSave.Count; a++)
@@ -1433,10 +1531,13 @@ namespace DiscordBot
             tempSave = tempSave.OrderByDescending(o => o.games.Count > 0 ? o.games[0].timeSpentPlaying.TotalHours : 0).ToList();
             for (int a = 0; a < tempSave.Count; a++)
             {
+                SendString += WriteLine(tempSave[a].user.Username + " " + tempSave[a].games.Count + " games.");
                 for (int b = 0; b < tempSave[a].games.Count; b++)
                 {
-                    SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + temp[a].userName);
+                    //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
+                    SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
                 }
+                SendString += WriteLine("\n");
             }
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {
