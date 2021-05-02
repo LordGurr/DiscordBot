@@ -28,46 +28,42 @@ namespace DiscordBot
 
         private string TimespanToString(TimeSpan span)
         {
-            string SendString = string.Empty;
             if (span.TotalDays > 7)
             {
-                SendString += span.Days / 7 + " veckor " + span.Days % 7 + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Days / 7 + " veckor " + span.Days % 7 + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
-            if (span.TotalDays >= 1)
+            else if (span.TotalDays >= 1)
             {
-                SendString += span.Days + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Days + " dagar " + span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
             else if (span.TotalHours >= 1)
             {
-                SendString += span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
+                return span.Hours + " timmar " + span.Minutes + " minuter"/*, ctx*/;
             }
             else if (span.TotalMinutes >= 1)
             {
-                SendString += span.Minutes + " minuter " + (int)span.Seconds + " sekunder "/*, ctx*/;
+                return span.Minutes + " minuter " + (int)span.Seconds + " sekunder "/*, ctx*/;
             }
             else
             {
-                SendString += (int)span.TotalSeconds + " sekunder "/*, ctx*/;
+                return (int)span.TotalSeconds + " sekunder "/*, ctx*/;
             }
-            return SendString;
         }
 
         private string TimespanToShortString(TimeSpan span)
         {
-            string SendString = string.Empty;
             if (span.TotalDays > 7)
             {
-                SendString += span.Days / 7 + ":" + span.Days % 7 + ":" + span.Hours + ":" + span.Minutes/*, ctx*/;
+                return span.Days / 7 + ":" + span.Days % 7 + ":" + (span.Hours < 10 ? "0" : "") + span.Hours + ":" + (span.Minutes < 10 ? "0" : "") + span.Minutes/*, ctx*/;
             }
-            if (span.TotalDays >= 1)
+            else if (span.TotalDays >= 1)
             {
-                SendString += span.Days + ":" + span.Hours + ":" + span.Minutes/*, ctx*/;
+                return span.Days + ":" + (span.Hours < 10 ? "0" : "") + span.Hours + ":" + (span.Minutes < 10 ? "0" : "") + span.Minutes/*, ctx*/;
             }
             else
             {
-                SendString += span.Hours + ":" + span.Minutes/*, ctx*/;
+                return span.Hours + ":" + (span.Minutes < 10 ? "0" : "") + span.Minutes/*, ctx*/;
             }
-            return SendString;
         }
 
         private string WriteLine(string str)
@@ -1418,7 +1414,7 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task BotCoin(CommandContext ctx)
         {
-            int i = BotCoinIndex(ctx);
+            int i = OnlyBotCoinIndex(ctx);
             if (i > -1)
             {
                 if (botCoinSaves[i].userName == null)
@@ -1441,7 +1437,7 @@ namespace DiscordBot
             if (i > -1)
             {
                 await ctx.Channel.SendMessageAsync(ctx.User.Username + " är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
-                
+
                 return;
             }
             if (!ctx.User.IsBot)
@@ -1485,7 +1481,7 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task TimeTillSave(CommandContext ctx)
         {
-            await ctx.RespondAsync("Time till save is: " +TimespanToString(DateTime.Now- bot.lastSave));
+            await ctx.RespondAsync("Time till save is: " + TimespanToString((bot.lastSave.Add(bot.sparTid) - DateTime.Now)));
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
@@ -1525,10 +1521,10 @@ namespace DiscordBot
             GiveBotCoin(ctx);
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("gameleaderboard", "gameleader", "gameboard")]
+        [DSharpPlus.CommandsNext.Attributes.Command("fullleaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("fullgameleaderboard", "fullgameleader", "fullgameboard", "allleader", "fullleader")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
-        public async Task GameLeaderboard(CommandContext ctx)
+        public async Task FullGameLeaderboard(CommandContext ctx)
         {
             string SendString = string.Empty;
             List<UserGameSave> tempSave = new List<UserGameSave>();
@@ -1547,6 +1543,40 @@ namespace DiscordBot
                     SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
                 }
                 SendString += WriteLine(" ");
+            }
+            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            {
+                Title = "Game time leaderboard",
+                Description = SendString,
+            });
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("leaderboard", "gameleader", "gameboard", "leader", "board")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task GameLeaderboard(CommandContext ctx)
+        {
+            string SendString = string.Empty;
+            List<UserGameSave> tempSave = new List<UserGameSave>();
+            tempSave.AddRange(bot.gameSaves);
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                tempSave[a].SetGames(tempSave[a].games.OrderByDescending(o => o.timeSpentPlaying.TotalHours).ToList());
+            }
+            tempSave = tempSave.OrderByDescending(o => o.games.Count > 0 ? o.games[0].timeSpentPlaying.TotalHours : 0).ToList();
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                if (tempSave[a].games.Count > 0)
+                {
+                    SendString += WriteLine(tempSave[a].user.Username + " " + tempSave[a].games.Count + " games.");
+                    for (int b = 0; b < tempSave[a].games.Count; b++)
+                    {
+                        //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
+                        SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
+                    }
+                    SendString += WriteLine(" ");
+                }
             }
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {

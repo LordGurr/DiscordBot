@@ -62,12 +62,14 @@ namespace DiscordBot
         //public VoiceNextExtension Voice { get; set; } //To play music
         public async Task CheckOnline()
         {
+            string SendString = string.Empty;
             for (int i = 0; i < membersChecking.Count; i++)
             {
                 var task = membersChecking[i].Online();
-                if (membersChecking[i].online != task.Result)
+                SendString += task.Result.Item2 + "\n";
+                if (membersChecking[i].online != task.Result.Item1)
                 {
-                    membersChecking[i].online = task.Result;
+                    membersChecking[i].online = task.Result.Item1;
                     if (membersChecking[i].online)
                     {
                         await channelForOnlineMessage.SendMessageAsync(membersChecking[i].discordUser.Username + " just went online!");
@@ -80,6 +82,7 @@ namespace DiscordBot
                     }
                 }
             }
+            await WriteLine(SendString);
         }
 
         public async Task CheckOnline(DiscordChannel channel)
@@ -110,9 +113,9 @@ namespace DiscordBot
             for (int i = 0; i < membersChecking.Count; i++)
             {
                 var task = membersChecking[i].Online();
-                if (membersChecking[i].online != task.Result)
+                if (membersChecking[i].online != task.Result.Item1)
                 {
-                    membersChecking[i].online = task.Result;
+                    membersChecking[i].online = task.Result.Item1;
                 }
             }
         }
@@ -1183,6 +1186,18 @@ namespace DiscordBot
             return -1;
         }
 
+        public static int OnlyBotCoinIndex(CommandContext ctx)
+        {
+            for (int i = 0; i < botCoinSaves.Count; i++)
+            {
+                if (botCoinSaves[i].user == ctx.Message.Author.Id)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         public int GameTimeIndex(CommandContext ctx)
         {
             for (int i = 0; i < gameSaves.Count; i++)
@@ -1424,14 +1439,14 @@ namespace DiscordBot
             {
                 discordUser = _discordUser;
                 var task = Online();
-                online = task.Result;
+                online = task.Result.Item1;
                 MessageOnline = _MessageOnline;
                 MessageOffline = _MessageOffline;
                 //pathOffline = _pathOffline;
                 //pathOnline = _pathOnline;
             }
 
-            public async Task<bool> Online()
+            public async Task<(bool, string)> Online()
             {
                 try
                 {
@@ -1442,66 +1457,66 @@ namespace DiscordBot
                         {
                             if (presence.Status == UserStatus.Online)
                             {
-                                await WriteLine(discordUser.Username + " is online");
-                                return true;
+                                //await WriteLine(discordUser.Username + " is online");
+                                return (true, discordUser.Username + " is online");
                             }
                             else if (presence.Status == UserStatus.Offline)
                             {
-                                await WriteLine(discordUser.Username + " is offline");
-                                return false;
+                                //await WriteLine(discordUser.Username + " is offline");
+                                return (false, discordUser.Username + " is offline");
                             }
                             else if (presence.Status == UserStatus.Invisible)
                             {
-                                await WriteLine(discordUser.Username + " is trying to hide");
-                                return true;
+                                //await WriteLine(discordUser.Username + " is trying to hide");
+                                return (true, discordUser.Username + " is trying to hide");
                             }
                             else if (presence.Status == UserStatus.Idle)
                             {
-                                await WriteLine(discordUser.Username + " is afk");
-                                return true;
+                                //await WriteLine(discordUser.Username + " is afk");
+                                return (true, discordUser.Username + " is afk");
                             }
                         }
                         if (!presence.ClientStatus.Mobile.HasValue && !presence.ClientStatus.Desktop.HasValue && !presence.ClientStatus.Web.HasValue)
                         {
-                            await WriteLine(discordUser.Username + " is not set");
-                            return false;
+                            //await WriteLine(discordUser.Username + " is not set");
+                            return (false, discordUser.Username + " is not set");
                         }
                         if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Online || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Online || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Online)
                         {
-                            await WriteLine(discordUser.Username + " is online");
-                            return true;
+                            //await WriteLine(discordUser.Username + " is online");
+                            return (true, discordUser.Username + " is online");
                         }
                         else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.Offline || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.Offline || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.Offline)
                         {
-                            await WriteLine(discordUser.Username + " is offline");
-                            return false;
+                            //await WriteLine(discordUser.Username + " is offline");
+                            return (false, discordUser.Username + " is offline");
                         }
                         else if (presence.ClientStatus.Mobile.HasValue && presence.ClientStatus.Mobile.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Desktop.HasValue && presence.ClientStatus.Desktop.Value == UserStatus.DoNotDisturb || presence.ClientStatus.Web.HasValue && presence.ClientStatus.Web.Value == UserStatus.DoNotDisturb)
                         {
-                            await WriteLine(discordUser.Username + " is trying to hide");
-                            return true;
+                            //await WriteLine(discordUser.Username + " is trying to hide");
+                            return (true, discordUser.Username + " is trying to hide");
                         }
                         else if (presence.ClientStatus.Mobile.HasValue || presence.ClientStatus.Desktop.HasValue || presence.ClientStatus.Web.HasValue)
                         {
-                            await WriteLine(discordUser.Username + " is trying to hide");
-                            return false;
+                            //await WriteLine(discordUser.Username + " is trying to hide");
+                            return (false, discordUser.Username + " is trying to hide");
                         }
                         else
                         {
-                            await WriteLine(discordUser.Username + " is not set");
-                            return false;
+                            //await WriteLine(discordUser.Username + " is not set");
+                            return (false, discordUser.Username + " is not set");
                         }
                     }
                     else
                     {
-                        await WriteLine(discordUser.Username + " is not set");
-                        return false;
+                        //await WriteLine(discordUser.Username + " is not set");
+                        return (false, discordUser.Username + " is not set");
                     }
                 }
                 catch (Exception e)
                 {
-                    await WriteLine(e.Message);
-                    return false;
+                    //await WriteLine(e.Message);
+                    return (false, e.Message);
                 }
             }
 
