@@ -859,7 +859,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Couldn't save: " + e.Message);
+                        await WriteLine("Couldn't save: " + e.Message + ". callstack: " + e.StackTrace);
                     }
                 }
             }
@@ -1041,7 +1041,7 @@ namespace DiscordBot
                             {
                                 for (int a = 0; a < presence.Activities.Count; a++)
                                 {
-                                    if (presence.Activities[a].ActivityType == ActivityType.Playing)
+                                    if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
                                     {
                                         int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
                                         TimeSpan timeSpan = DateTime.Now - lastSave;
@@ -1058,7 +1058,7 @@ namespace DiscordBot
                             }
                             else
                             {
-                                if (presence.Activity.ActivityType == ActivityType.Playing)
+                                if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
                                 {
                                     int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
                                     TimeSpan timeSpan = DateTime.Now - lastSave;
@@ -1088,14 +1088,21 @@ namespace DiscordBot
             {
                 for (int i = 0; i < gameSaves.Count; i++)
                 {
-                    string saveString = Convert.ToString(gameSaves[i].userId);
-
-                    for (int a = 0; a < gameSaves[i].games.Count; a++)
+                    try
                     {
-                        string gamename = gameSaves[i].games[a].gameName.Replace(" ", "§");
-                        saveString += " " + gamename + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
+                        string saveString = Convert.ToString(gameSaves[i].userId);
+
+                        for (int a = 0; a < gameSaves[i].games.Count; a++)
+                        {
+                            string gamename = gameSaves[i].games[a].gameName.Replace(" ", "§");
+                            saveString += " " + gamename + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
+                        }
+                        tw.WriteLine(saveString);
                     }
-                    tw.WriteLine(saveString);
+                    catch (Exception e)
+                    {
+                        await WriteLine("Couldn't save game save: " + e.Message + ". id: " + gameSaves[i].userId);
+                    }
                 }
             }
             int totalGames = 0;

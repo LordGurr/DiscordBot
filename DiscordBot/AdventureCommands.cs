@@ -1441,6 +1441,7 @@ namespace DiscordBot
             if (i > -1)
             {
                 await ctx.Channel.SendMessageAsync(ctx.User.Username + " är redan uppskriven för gametime och har " + bot.gameSaves[i].games.Count + " spel som vars tid räknas.").ConfigureAwait(false);
+                
                 return;
             }
             if (!ctx.User.IsBot)
@@ -1477,6 +1478,14 @@ namespace DiscordBot
         public async Task LastSave(CommandContext ctx)
         {
             await ctx.RespondAsync("Last time saved was: " + bot.lastSave.ToShortTimeString());
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("timetillsave")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task TimeTillSave(CommandContext ctx)
+        {
+            await ctx.RespondAsync("Time till save is: " +TimespanToString(DateTime.Now- bot.lastSave));
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("botcoinleaderboard")]
@@ -1537,7 +1546,7 @@ namespace DiscordBot
                     //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
                     SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
                 }
-                SendString += WriteLine("\n");
+                SendString += WriteLine(" ");
             }
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {
