@@ -1134,7 +1134,7 @@ namespace DiscordBot
             }
         }
 
-        private bool IsplayingInGameSaves(UserGameSave save)
+        public bool IsplayingInGameSaves(UserGameSave save)
         {
             if (save.user.Presence != null)
             {
@@ -1163,7 +1163,7 @@ namespace DiscordBot
             return false;
         }
 
-        private bool IsplayingInGameSaves(UserGameSave save, GameTimeSave gameSave)
+        public bool IsplayingInGameSaves(UserGameSave save, GameTimeSave gameSave)
         {
             if (save.user.Presence != null)
             {
@@ -1184,6 +1184,7 @@ namespace DiscordBot
                     {
                         if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
                         {
+                            return presence.Activity.Name == gameSave.gameName;
                         }
                     }
                 }
