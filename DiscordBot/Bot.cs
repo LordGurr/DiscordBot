@@ -865,7 +865,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Couldn't save: " + e.Message + ". callstack: " + e.StackTrace);
+                        await WriteLine("Couldn't save: " + e.Message + ". callstack: " + e.StackTrace + ". This is very bad and requires attention now.");
                     }
                 }
             }
@@ -1032,8 +1032,11 @@ namespace DiscordBot
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
         }
 
+        private int peoplePlaying = 0;
+
         public async Task UpdateGameSaves()
         {
+            peoplePlaying = 0;
             for (int i = 0; i < gameSaves.Count; i++)
             {
                 try
@@ -1059,6 +1062,7 @@ namespace DiscordBot
                                         {
                                             gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
                                         }
+                                        peoplePlaying++;
                                     }
                                 }
                             }
@@ -1076,6 +1080,7 @@ namespace DiscordBot
                                     {
                                         gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
                                     }
+                                    peoplePlaying++;
                                 }
                             }
                         }
@@ -1090,36 +1095,100 @@ namespace DiscordBot
 
         public async Task SaveGameSaves()
         {
-            using (TextWriter tw = new StreamWriter("usergamesaves.txt"))
+            try
             {
+                using (TextWriter tw = new StreamWriter("usergamesaves.txt"))
+                {
+                    for (int i = 0; i < gameSaves.Count; i++)
+                    {
+                        try
+                        {
+                            string saveString = Convert.ToString(gameSaves[i].userId);
+
+                            for (int a = 0; a < gameSaves[i].games.Count; a++)
+                            {
+                                string gamename = gameSaves[i].games[a].gameName.Replace(" ", "§");
+                                saveString += " " + gamename + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
+                            }
+                            tw.WriteLine(saveString);
+                        }
+                        catch (Exception e)
+                        {
+                            await WriteLine("Couldn't save game save: " + e.Message + ". id: " + gameSaves[i].userId);
+                        }
+                    }
+                }
+                int totalGames = 0;
                 for (int i = 0; i < gameSaves.Count; i++)
                 {
-                    try
+                    for (int a = 0; a < gameSaves[i].games.Count; a++)
                     {
-                        string saveString = Convert.ToString(gameSaves[i].userId);
-
-                        for (int a = 0; a < gameSaves[i].games.Count; a++)
-                        {
-                            string gamename = gameSaves[i].games[a].gameName.Replace(" ", "§");
-                            saveString += " " + gamename + " " + gameSaves[i].games[a].timeSpentPlaying.ToString();
-                        }
-                        tw.WriteLine(saveString);
-                    }
-                    catch (Exception e)
-                    {
-                        await WriteLine("Couldn't save game save: " + e.Message + ". id: " + gameSaves[i].userId);
+                        totalGames++;
                     }
                 }
+                await WriteLine("Sparade alla " + gameSaves.Count + " gamesaves användare och " + totalGames + " spel och just nu spelar " + peoplePlaying + " personer.");
             }
-            int totalGames = 0;
-            for (int i = 0; i < gameSaves.Count; i++)
+            catch (Exception e)
             {
-                for (int a = 0; a < gameSaves[i].games.Count; a++)
+                await WriteLine("Game saving fully crashed this is bad: " + e.Message);
+            }
+        }
+
+        private bool IsplayingInGameSaves(UserGameSave save)
+        {
+            if (save.user.Presence != null)
+            {
+                DiscordPresence presence = save.user.Presence;
+                if (presence != null)
                 {
-                    totalGames++;
+                    if (presence.Activities.Count > 0)
+                    {
+                        for (int a = 0; a < presence.Activities.Count; a++)
+                        {
+                            if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
-            await WriteLine("Sparade alla " + gameSaves.Count + " gamesaves användare och " + totalGames + " spel.");
+            return false;
+        }
+
+        private bool IsplayingInGameSaves(UserGameSave save, GameTimeSave gameSave)
+        {
+            if (save.user.Presence != null)
+            {
+                DiscordPresence presence = save.user.Presence;
+                if (presence != null)
+                {
+                    if (presence.Activities.Count > 0)
+                    {
+                        for (int a = 0; a < presence.Activities.Count; a++)
+                        {
+                            if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                            {
+                                return (presence.Activities[a].Name == gameSave.gameName);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                        {
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         public static void GiveBotCoin(CommandContext ctx)

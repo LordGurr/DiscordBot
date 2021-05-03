@@ -46,7 +46,7 @@ namespace DiscordBot
             }
             else
             {
-                return (int)span.TotalSeconds + " sekunder "/*, ctx*/;
+                return (int)span.TotalSeconds + " sekund" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
             }
         }
 
@@ -63,6 +63,22 @@ namespace DiscordBot
             else
             {
                 return span.Hours + ":" + (span.Minutes < 10 ? "0" : "") + span.Minutes/*, ctx*/;
+            }
+        }
+
+        private string TimespanToShortStringUnit(TimeSpan span)
+        {
+            if (span.TotalDays > 7)
+            {
+                return span.Days / 7 + "wk " + span.Days % 7 + "d " + (span.Hours < 10 ? "0" : "") + span.Hours + "hr " + (span.Minutes < 10 ? "0" : "") + span.Minutes + "m"/*, ctx*/;
+            }
+            else if (span.TotalDays >= 1)
+            {
+                return span.Days + "d " + (span.Hours < 10 ? "0" : "") + span.Hours + "hr " + (span.Minutes < 10 ? "0" : "") + span.Minutes + "m "/*, ctx*/;
+            }
+            else
+            {
+                return span.Hours + "hr " + (span.Minutes < 10 ? "0" : "") + span.Minutes + "m"/*, ctx*/;
             }
         }
 
@@ -1602,6 +1618,40 @@ namespace DiscordBot
             for (int a = 0; a < tempSave.Count; a++)
             {
                 if (tempSave[a].games.Count > 0)
+                {
+                    SendString += WriteLine(tempSave[a].user.Username + " " + tempSave[a].games.Count + " games.");
+                    for (int b = 0; b < tempSave[a].games.Count; b++)
+                    {
+                        //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
+                        SendString += WriteLine(TimespanToShortString(tempSave[a].games[b].timeSpentPlaying) + " " + tempSave[a].games[b].gameName);
+                    }
+                    SendString += WriteLine(" ");
+                }
+            }
+            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            {
+                Title = "Game time leaderboard",
+                Description = SendString,
+            });
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("onlineleaderboardusersort")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("onlinegameleaderusersort", "onlinegameboardusersort", "onlineleaderusersort", "onlineboardusersort", "onlineleaderboarduser", "onlinegameleaderuser", "onlinegameboarduser", "onlineleaderuser", "bonlineoarduser")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task OnlineGameLeaderboardUserSort(CommandContext ctx)
+        {
+            string SendString = string.Empty;
+            List<UserGameSave> tempSave = new List<UserGameSave>();
+            tempSave.AddRange(bot.gameSaves);
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                tempSave[a].SetGames(tempSave[a].games.OrderByDescending(o => o.timeSpentPlaying.TotalHours).ToList());
+            }
+            tempSave = tempSave.OrderByDescending(o => o.games.Count > 0 ? o.games[0].timeSpentPlaying.TotalHours : 0).ToList();
+            for (int a = 0; a < tempSave.Count; a++)
+            {
+                if (tempSave[a].games.Count > 0 && tempSave)
                 {
                     SendString += WriteLine(tempSave[a].user.Username + " " + tempSave[a].games.Count + " games.");
                     for (int b = 0; b < tempSave[a].games.Count; b++)
