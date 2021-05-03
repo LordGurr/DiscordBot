@@ -929,7 +929,11 @@ namespace DiscordBot
             }
             MessageCreateEventArgs message;
             message = null;
+#if DEBUG
             await TakeScreenshotAndUploadApplication(message, Process.GetCurrentProcess().MainWindowHandle);
+#else
+            await WriteLine("Should screenshot here buut because of pi will just say this");
+#endif
             await Client.DisconnectAsync();
             Client.Dispose();
         }
@@ -1798,7 +1802,12 @@ namespace DiscordBot
 
             public void IncreaseTime(TimeSpan timeSpan)
             {
+                TimeSpan cur = timeSpentPlaying;
                 timeSpentPlaying += timeSpan;
+                if (cur >= timeSpentPlaying)
+                {
+                    WriteLine("Timespan not increasing. timespan cur: " + cur.ToString() + " spentplaying: " + timeSpentPlaying.ToString());
+                }
             }
         }
 

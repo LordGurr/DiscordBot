@@ -888,18 +888,25 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Aliases("laddaup")]
         [DSharpPlus.CommandsNext.Attributes.Description("Laddar upp en specificerad fil.")]
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
-        public async Task FileUpload(CommandContext ctx, params string[] filePath)
+        public async Task FileUpload(CommandContext ctx, [RemainingText] string filePath)
         {
-            string actualFilePath = "";
-            for (int i = 0; i < filePath.Length; i++)
+            //string actualFilePath = "";
+            //for (int i = 0; i < filePath.Length; i++)
+            //{
+            //    actualFilePath += filePath[i];
+            //    if (i + 1 < filePath.Length)
+            //    {
+            //        actualFilePath += " ";
+            //    }
+            //}
+            if (!filePath.Contains("config.json"))
             {
-                actualFilePath += filePath[i];
-                if (i + 1 < filePath.Length)
-                {
-                    actualFilePath += " ";
-                }
+                await bot.UploadFile(filePath, ctx.Channel);
             }
-            await bot.UploadFile(actualFilePath, ctx.Channel);
+            else
+            {
+                await ctx.RespondAsync("I wont't upload any config files through discord");
+            }
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("uploadall")]
@@ -907,19 +914,26 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task FileUploadAll(CommandContext ctx)
         {
-            await bot.UploadFile("gåtSvaren.txt", ctx.Channel);
-            await bot.UploadFile("gåtor.txt", ctx.Channel); // citat.txt emotions.txt
-            await bot.UploadFile("nouns.txt", ctx.Channel);
-            await bot.UploadFile("citat.txt", ctx.Channel);
-            await bot.UploadFile("emotions.txt", ctx.Channel);
-            await bot.UploadFile("citatTemplate.txt", ctx.Channel);
-            await bot.UploadFile("botCoinSave.txt", ctx.Channel);
-            await bot.UploadFile("channels.txt", ctx.Channel);
-            await bot.UploadFile("usergamesaves.txt", ctx.Channel);
-            string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
-            for (int i = 0; i < tempArray.Length - 1; i++)
+            try
             {
-                await bot.UploadFile(tempArray[i], ctx.Channel);
+                await bot.UploadFile("gåtSvaren.txt", ctx.Channel); //  ?upload gåtSvaren.txt
+                await bot.UploadFile("gåtor.txt", ctx.Channel); //  ?upload gåtor.txt
+                await bot.UploadFile("nouns.txt", ctx.Channel); // ?upload nouns.txt
+                await bot.UploadFile("citat.txt", ctx.Channel); // ?upload  citat.txt
+                await bot.UploadFile("emotions.txt", ctx.Channel); // ?upload emotions.txt
+                await bot.UploadFile("citatTemplate.txt", ctx.Channel); // ?upload citatTemplate.txt
+                await bot.UploadFile("botCoinSave.txt", ctx.Channel); // ?upload botCoinSave.txt
+                await bot.UploadFile("channels.txt", ctx.Channel); // ?upload channels.txt
+                await bot.UploadFile("usergamesaves.txt", ctx.Channel); // ?upload usergamesaves.txt
+                string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
+                for (int i = 0; i < tempArray.Length - 1; i++)
+                {
+                    await bot.UploadFile(tempArray[i], ctx.Channel);
+                }
+            }
+            catch (Exception e)
+            {
+                await ctx.RespondAsync("COuldn't upload file: " + e.Message);
             }
         }
 
