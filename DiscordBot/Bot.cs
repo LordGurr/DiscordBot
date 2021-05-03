@@ -137,8 +137,9 @@ namespace DiscordBot
             //membersChecking.Add(new MemberToCheck(mem.Result, "Eric e online", "Erik offline"));
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
                 membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
+            mem = Client.GetUserAsync(460713383017185292);
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
-                membersChecking.Add(new MemberToCheck(mem.Result, "Gustav är online", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
+                membersChecking.Add(new MemberToCheck(mem.Result, "Gustav gick online", "Gustav gick offline"));
             var channel = Client.GetChannelAsync(837361660007415828);
             channelForOnlineMessage = channel.Result;
         }
