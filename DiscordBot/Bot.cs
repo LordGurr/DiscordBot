@@ -137,6 +137,8 @@ namespace DiscordBot
             //membersChecking.Add(new MemberToCheck(mem.Result, "Eric e online", "Erik offline"));
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
                 membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
+            if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
+                membersChecking.Add(new MemberToCheck(mem.Result, "Gustav är online", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
             var channel = Client.GetChannelAsync(837361660007415828);
             channelForOnlineMessage = channel.Result;
         }
@@ -651,10 +653,48 @@ namespace DiscordBot
 
         public async Task RunAsync()
         {
+#if DEBUG
+            Console.WriteLine("In debug mode and bot starting");
+            Console.WriteLine("Setting directory to: " + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty));
+            Environment.CurrentDirectory = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty);
+#else
+            string directory = "/home/pi/DiscordbotMajRaspberry";
+            try
+            {
+                Console.WriteLine("In release mode and bot starting");
+                Console.WriteLine("Ska försöka byta " + Environment.CurrentDirectory + " till " + directory);
+                Console.WriteLine("Vanligtvis så är den: " + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("En jävla writeline krashade: " + e.Message); ;
+            }
+            try
+            {
+                //Set the current directory.
+                Directory.SetCurrentDirectory(directory);
+                Console.WriteLine("Directory set using Directory.SetCurrentDirectory");
+            }
+            catch (DirectoryNotFoundException e)
+            {
+                Console.WriteLine("The specified directory does not exist. {0}", e);
+            }
+            try
+            {
+                //Set the current directory.
+                Environment.CurrentDirectory = directory;
+                Console.WriteLine("Directory set using Environment.CurrentDirectory");
+            }
+            catch (DirectoryNotFoundException e)
+            {
+                Console.WriteLine("The specified directory does not exist. {0}", e);
+            }
+            //write to a file
+#endif
+
             AdventureCommands.bot = this;
             runTime = new Stopwatch();
             runTime.Start();
-            Environment.CurrentDirectory = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName.Replace("\\" + System.AppDomain.CurrentDomain.FriendlyName + ".exe", string.Empty);
             restart = true;
             var json = string.Empty;
 
@@ -783,7 +823,11 @@ namespace DiscordBot
                 message = null;
                 try
                 {
+#if DEBUG
                     await TakeScreenshotAndUploadApplication(message, Process.GetCurrentProcess().MainWindowHandle);
+#else
+                    await WriteLine("Det är nu den skulle ta en skärmdump men du får nöja dig med det här");
+#endif
                 }
                 catch (Exception e)
                 {

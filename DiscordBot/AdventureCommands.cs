@@ -254,12 +254,17 @@ namespace DiscordBot
             SendString += WriteLine("Gateway version: " + bot.Client.GatewayVersion/*, ctx*/);
             SendString += WriteLine("Windows version: " + Environment.OSVersion/*, ctx*/);
             SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
+#if DEBUG
+
             ScreenShootingShit screenShit = new ScreenShootingShit();
             ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
             for (int i = 0; i < displays.Count; i++)
             {
                 SendString += WriteLine("Monitor " + (i + 1) + " har en upplösning på " + displays[i].ScreenWidth + " gånger " + displays[i].ScreenHeight + " pixlar"/*, ctx*/);
             }
+#else
+            SendString += WriteLine("Monitor info funkar inte på raspberry");
+#endif
             SendString += WriteLine("Dator namn: " + Environment.MachineName/*, ctx*/);
             SendString += WriteLine("Användarnamn: " + Environment.UserName/*, ctx*/);
             SendString += WriteLine("Dator organisation: " + Environment.UserDomainName/*, ctx*/);
@@ -897,13 +902,38 @@ namespace DiscordBot
             await bot.UploadFile(actualFilePath, ctx.Channel);
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("uploadall")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Laddar upp en specificerad fil.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task FileUploadAll(CommandContext ctx)
+        {
+            await bot.UploadFile("gåtSvaren.txt", ctx.Channel);
+            await bot.UploadFile("gåtor.txt", ctx.Channel); // citat.txt emotions.txt
+            await bot.UploadFile("nouns.txt", ctx.Channel);
+            await bot.UploadFile("citat.txt", ctx.Channel);
+            await bot.UploadFile("emotions.txt", ctx.Channel);
+            await bot.UploadFile("citatTemplate.txt", ctx.Channel);
+            await bot.UploadFile("botCoinSave.txt", ctx.Channel);
+            await bot.UploadFile("channels.txt", ctx.Channel);
+            await bot.UploadFile("usergamesaves.txt", ctx.Channel);
+            string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
+            for (int i = 0; i < tempArray.Length - 1; i++)
+            {
+                await bot.UploadFile(tempArray[i], ctx.Channel);
+            }
+        }
+
         [DSharpPlus.CommandsNext.Attributes.Command("skärmdump")]
         [DSharpPlus.CommandsNext.Attributes.Aliases("skärmbild", "screenshot")]
         [DSharpPlus.CommandsNext.Attributes.Description("Takes a screenshot.")]
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task Screenshot(CommandContext ctx)
         {
+#if DEBUG
             await bot.TakeScreenshotAndUpload(ctx);
+#else
+            await ctx.RespondAsync("Du kan bara göra detta på windows");
+#endif
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("skärm")]
@@ -914,9 +944,13 @@ namespace DiscordBot
         {
             try
             {
+#if DEBUG
                 ScreenShootingShit screenShit = new ScreenShootingShit();
                 ScreenShootingShit.DisplayInfoCollection displays = screenShit.GetDisplays();
                 await bot.TakeScreenshotAndUploadApplication(ctx, displays[index - 1].hMonitor);
+#else
+                await ctx.RespondAsync("Because i might be on raspberry i won't do this");
+#endif
             }
             catch (Exception e)
             {
@@ -932,6 +966,7 @@ namespace DiscordBot
             try
             {
                 // Move window to show as much as possible
+#if DEBUG
                 int x = Console.CursorLeft;
                 int y = Console.CursorTop;
                 Console.SetCursorPosition(0, 0);
@@ -939,6 +974,9 @@ namespace DiscordBot
                 Console.SetCursorPosition(x, y);
                 await Task.Delay(5);
                 await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
+#else
+                await ctx.RespondAsync("No screenshots on raspberry");
+#endif
             }
             catch (Exception e)
             {
@@ -974,6 +1012,7 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task GetAppScreen(CommandContext ctx)
         {
+#if DEBUG
             string SendString = string.Empty;
             foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
             {
@@ -991,6 +1030,9 @@ namespace DiscordBot
                     await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
                 }
             }
+#else
+            await ctx.RespondAsync("Endast på windows som sagt");
+#endif
         }
 
         //[DSharpPlus.CommandsNext.Attributes.Command("commandline")]
@@ -1081,7 +1123,11 @@ namespace DiscordBot
                 await SaveAllbotcoin(ctx);
                 await SaveAllmembers(ctx);
                 await SaveGameTime(ctx);
+#if DEBUG
                 await bot.TakeScreenshotAndUploadApplication(ctx, Process.GetCurrentProcess().MainWindowHandle);
+#else
+                await WriteLine("Låtsas som om detta är en skärmdump", ctx);
+#endif
                 bot.Client.Dispose();
                 await Task.Delay(500);
                 Environment.Exit(0);
@@ -1571,9 +1617,9 @@ namespace DiscordBot
             GiveBotCoin(ctx);
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("gameleader", "gameboard", "leader", "board")]
-        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        //[DSharpPlus.CommandsNext.Attributes.Command("leaderboard")]
+        //[DSharpPlus.CommandsNext.Attributes.Aliases("gameleader", "gameboard", "leader", "board")]
+        //[DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task GameLeaderboard(CommandContext ctx)
         {
             string SendString = string.Empty;
@@ -1607,40 +1653,49 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task GameLeaderboard(CommandContext ctx, [RemainingText] string gamename)
         {
-            string SendString = string.Empty;
-            List<(GameTimeSave, string)> tempSave = new List<(GameTimeSave, string)>();
-            for (int i = 0; i < bot.gameSaves.Count; i++)
+            if (gamename != null)
             {
-                for (int a = 0; a < bot.gameSaves[i].games.Count; a++)
+                string SendString = string.Empty;
+                List<(GameTimeSave, string)> tempSave = new List<(GameTimeSave, string)>();
+                for (int i = 0; i < bot.gameSaves.Count; i++)
                 {
-                    if (bot.gameSaves[i].games[a].gameName.ToLower() == gamename.ToLower())
+                    for (int a = 0; a < bot.gameSaves[i].games.Count; a++)
                     {
-                        tempSave.Add((bot.gameSaves[i].games[a], bot.gameSaves[i].user.Username));
+                        if (bot.gameSaves[i].games[a].gameName.ToLower() == gamename.ToLower())
+                        {
+                            tempSave.Add((bot.gameSaves[i].games[a], bot.gameSaves[i].user.Username));
+                        }
                     }
                 }
-            }
-            //tempSave.AddRange(bot.gameSaves);
-            if (tempSave.Count > 0)
-            {
-                tempSave = tempSave.OrderByDescending(o => o.Item1.timeSpentPlaying.TotalHours).ToList();
-                for (int a = 0; a < tempSave.Count; a++)
+                //tempSave.AddRange(bot.gameSaves);
+                if (tempSave.Count > 0)
                 {
-                    //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
-                    SendString += WriteLine(TimespanToShortString(tempSave[a].Item1.timeSpentPlaying) + " " + tempSave[a].Item1.gameName + " " + tempSave[a].Item2);
+                    tempSave = tempSave.OrderByDescending(o => o.Item1.timeSpentPlaying.TotalHours).ToList();
+                    for (int a = 0; a < tempSave.Count; a++)
+                    {
+                        //SendString += WriteLine(tempSave[a].games[b].gameName + " has been played for " + TimespanToString(tempSave[a].games[b].timeSpentPlaying) + " by " + tempSave[a].user.Username);
+                        SendString += WriteLine(TimespanToShortString(tempSave[a].Item1.timeSpentPlaying) + " " + tempSave[a].Item1.gameName + " " + tempSave[a].Item2);
 
-                    //SendString += WriteLine(" ");
+                        //SendString += WriteLine(" ");
+                    }
+                    await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                    {
+                        Title = "Game time leaderboard",
+                        Description = SendString,
+                    });
+                    GiveBotCoin(ctx);
                 }
-                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                else
                 {
-                    Title = "Game time leaderboard",
-                    Description = SendString,
-                });
+                    await ctx.RespondAsync("There were no savegames found called: " + gamename);
+                    //await GameLeaderboard(ctx);
+                }
             }
             else
             {
-                await ctx.RespondAsync("There were no savegames found called: " + gamename);
+                //await ctx.RespondAsync("There were no savegames found called: " + gamename);
+                await GameLeaderboard(ctx);
             }
-            GiveBotCoin(ctx);
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("leaderboardusersort")]
@@ -1677,10 +1732,10 @@ namespace DiscordBot
             GiveBotCoin(ctx);
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("onlineleaderboardusersort")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("onlinegameleaderusersort", "onlinegameboardusersort", "onlineleaderusersort", "onlineboardusersort", "onlineleaderboarduser", "onlinegameleaderuser", "onlinegameboarduser", "onlineleaderuser", "onlineboarduser")]
+        [DSharpPlus.CommandsNext.Attributes.Command("onlineleaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("onlinegameleader", "onlinegameboard", "onlineleader", "onlineboard")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
-        public async Task OnlineGameLeaderboardUserSort(CommandContext ctx)
+        public async Task OnlineGameLeaderboard(CommandContext ctx)
         {
             string SendString = string.Empty;
             List<(GameTimeSave, string)> tempSave = new List<(GameTimeSave, string)>();
