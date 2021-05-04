@@ -26,6 +26,41 @@ namespace DiscordBot
 
         //private string SendString = "";
 
+        private async Task<List<DiscordUser>> AllUsersInMessage(string command, CommandContext ctx)
+        {
+            List<string> idlist = command.Split(' ', '\n').ToList();
+            List<ulong> ids = new List<ulong>();
+            for (int i = 0; i < idlist.Count; i++)
+            {
+                try
+                {
+                    if (!idlist[i].Contains('@') && IsDigitsOnly(idlist[i], string.Empty))
+                    {
+                        ids.Add(Convert.ToUInt64(idlist[i]));
+                    }
+                }
+                catch (Exception)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid ulong.");
+                }
+            }
+            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                try
+                {
+                    var user = bot.Client.GetUserAsync(ids[i]);
+                    usersMentioned.Add(user.Result);
+                    command = command.Replace(ids[i].ToString(), string.Empty);
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
+                }
+            }
+            return usersMentioned;
+        }
+
         private string TimespanToString(TimeSpan span)
         {
             if (span.TotalDays > 7)
@@ -252,7 +287,7 @@ namespace DiscordBot
             SendString += WriteLine("Bot namn: " + bot.Client.CurrentApplication.Name/*, ctx*/);
             SendString += WriteLine("D#+ version: " + bot.Client.VersionString/*, ctx*/);
             SendString += WriteLine("Gateway version: " + bot.Client.GatewayVersion/*, ctx*/);
-            SendString += WriteLine("Windows version: " + Environment.OSVersion/*, ctx*/);
+            SendString += WriteLine("Operativ system: " + Environment.OSVersion/*, ctx*/);
             SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
 #if DEBUG
 
@@ -512,43 +547,9 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
         public async Task IsOnline(CommandContext ctx, [RemainingText] string idstring)
         {
-            List<string> idlist = idstring.Split(' ', '\n').ToList();
-            //for (int i = 0; i < idlist.Count; i++)
-            //{
-            //    if (idlist[i].Length > 18)
-            //    {
-            //        idlist.AddRange(idstring.Split("\n").ToList());
-            //        idlist.RemoveAt(i);
-            //    }
-            //}
-            List<ulong> ids = new List<ulong>();
-            for (int i = 0; i < idlist.Count; i++)
-            {
-                try
-                {
-                    if (!idlist[i].Contains('@'))
-                    {
-                        ids.Add(Convert.ToUInt64(idlist[i]));
-                    }
-                }
-                catch (Exception)
-                {
-                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id.");
-                }
-            }
-            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
-            for (int i = 0; i < ids.Count; i++)
-            {
-                try
-                {
-                    var user = bot.Client.GetUserAsync(ids[i]);
-                    usersMentioned.Add(user.Result);
-                }
-                catch (Exception e)
-                {
-                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
-                }
-            }
+            var task = AllUsersInMessage(idstring, ctx);
+            await task;
+            List<DiscordUser> usersMentioned = task.Result;
             string SendString = string.Empty;
             for (int i = 0; i < usersMentioned.Count; i++)
             {
@@ -572,43 +573,9 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Returns who is online.")]
         public async Task GetActivity(CommandContext ctx, [RemainingText] string idstring)
         {
-            List<string> idlist = idstring.Split(' ', '\n').ToList();
-            //for (int i = 0; i < idlist.Count; i++)
-            //{
-            //    if (idlist[i].Length > 18)
-            //    {
-            //        idlist.AddRange(idstring.Split("\n").ToList());
-            //        idlist.RemoveAt(i);
-            //    }
-            //}
-            List<ulong> ids = new List<ulong>();
-            for (int i = 0; i < idlist.Count; i++)
-            {
-                try
-                {
-                    if (!idlist[i].Contains('@'))
-                    {
-                        ids.Add(Convert.ToUInt64(idlist[i]));
-                    }
-                }
-                catch (Exception)
-                {
-                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id.");
-                }
-            }
-            List<DiscordUser> usersMentioned = ctx.Message.MentionedUsers.ToList();
-            for (int i = 0; i < ids.Count; i++)
-            {
-                try
-                {
-                    var user = bot.Client.GetUserAsync(ids[i]);
-                    usersMentioned.Add(user.Result);
-                }
-                catch (Exception e)
-                {
-                    await ctx.Channel.SendMessageAsync(idlist[i] + " is not a valid user id and sent the error: " + e.Message);
-                }
-            }
+            var task = AllUsersInMessage(idstring, ctx);
+            await task;
+            List<DiscordUser> usersMentioned = task.Result;
             string SendString = string.Empty;
             for (int i = 0; i < usersMentioned.Count; i++)
             {
@@ -713,35 +680,50 @@ namespace DiscordBot
         {
             try
             {
+                string result = string.Empty;
                 if (discordUser.Presence != null)
                 {
                     DiscordPresence presence = discordUser.Presence;
-                    if (presence.Activity != null)
+                    if (presence.Activities.Count > 0)
                     {
-                        string result = string.Empty;
-                        for (int i = 0; i < presence.Activities.Count; i++)
+                        if (presence.Activity != null)
                         {
-                            result += presence.Activities[i].ActivityType.ToString() + " " + presence.Activities[i].Name + "\n";
+                            for (int i = 0; i < presence.Activities.Count; i++)
+                            {
+                                result += presence.Activities[i].ActivityType.ToString() + " " + presence.Activities[i].Name + "\n";
+                            }
+                            if (result == string.Empty)
+                            {
+                                result = discordUser.Username + " is not doing anything";
+                            }
                         }
+                    }
+                    else if (presence.Activity != null)
+                    {
+                        result += presence.Activity.ActivityType.ToString() + " " + presence.Activity.Name + "\n";
                         if (result == string.Empty)
                         {
-                            return discordUser.Username + " is not doing anything";
+                            result = " is not doing anything";
                         }
-                        return result.Insert(0, "\n" + discordUser.Username + " is: ");
                     }
-                    return discordUser.Username + " is not set";
+                    else
+                    {
+                        result = discordUser.Username + " is not set";
+                    }
                 }
                 else
                 {
                     //await WriteLine(discordUser.Username + " is not set");
                     //await channel.SendMessageAsync(discordUser.Username + " is not set").ConfigureAwait(false);
-                    return discordUser.Username + " is not set";
+                    result = " is not set";
                 }
+                result = result.Insert(0, "\n" + discordUser.Username + " is: ");
+                return result;
             }
             catch (Exception e)
             {
                 //await WriteLine(e.Message);
-                return discordUser.Username + " errored: " + e.Message;
+                return discordUser.Username + " errored: " + e.Message + " callstack: " + e.StackTrace;
             }
         }
 
@@ -1505,6 +1487,64 @@ namespace DiscordBot
             GiveBotCoin(ctx);
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("simppoint")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("simpoäng")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for simppoint and tells you how many you have.")]
+        public async Task SimpPoint(CommandContext ctx)
+        {
+            int i = SimpPointIndex(ctx);
+            if (i > -1)
+            {
+                if (simpPointSaves[i].userName == null)
+                {
+                    simpPointSaves[i].userName = ctx.Message.Author.Username;
+                }
+                await ctx.Channel.SendMessageAsync(ctx.Message.Author.Username + " är redan uppskriven för simpPoint och har " + simpPointSaves[i].antalSimpPoint + " simppoäng.").ConfigureAwait(false);
+                return;
+            }
+            simpPointSaves.Add(new SimpPointSaveData(ctx.Message.Author.Id, rng.Next(0, 10), DateTime.Now.AddMinutes(-5), ctx.Message.Author.Username));
+            await ctx.Channel.SendMessageAsync(ctx.Message.Author.Username + " är nu uppskriven för simppoäng och har: " + simpPointSaves[simpPointSaves.Count - 1].antalSimpPoint + " simppoäng.").ConfigureAwait(false);
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("giveSimpPoint")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("sippoäng")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for simppoint and tells you how many you have.")]
+        public async Task SimpPoint(CommandContext ctx, [RemainingText] string input)
+        {
+            var task = AllUsersInMessage(input, ctx);
+            await task;
+            List<DiscordUser> usersInMessage = task.Result;
+            for (int i = 0; i < usersInMessage.Count; i++)
+            {
+                int a = SimpPointIndex(ctx);
+                if (a > -1)
+                {
+                    int points = GiveSimpPoint(usersInMessage[i]);
+                    if (points < 0)
+                    {
+                        await ctx.RespondAsync(usersInMessage[i].Username + " fick simppoäng för mindre än tolv sekunder sen och måste vänta");
+                    }
+                    await ctx.RespondAsync(ctx.Message.Author.Username + " gav " + usersInMessage[i].Username + " " + points + " simppoäng.");
+                }
+                else
+                {
+                    await Sudo(ctx, "simppoint" + usersInMessage[i].Mention);
+                    a = SimpPointIndex(ctx);
+                    if (a > -1)
+                    {
+                        int points = GiveSimpPoint(usersInMessage[i]);
+                        if (points < 0)
+                        {
+                            await ctx.RespondAsync(usersInMessage[i].Username + " fick simppoäng för mindre än tolv sekunder sen och måste vänta");
+                        }
+                        await ctx.RespondAsync(ctx.Message.Author.Username + " gav " + usersInMessage[i].Username + " " + points + " simppoäng.");
+                    }
+                }
+            }
+            GiveBotCoin(ctx);
+        }
+
         [DSharpPlus.CommandsNext.Attributes.Command("gametime")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
         public async Task GameTime(CommandContext ctx)
@@ -2005,6 +2045,19 @@ namespace DiscordBot
             catch (Exception e)
             {
                 await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        client.DownloadFile("https://thispersondoesnotexist.com/image", tempImagePng);
+                    }
+                    await bot.UploadFile(tempImagePng, ctx.Channel);
+                    GiveBotCoin(ctx);
+                }
+                catch (Exception ex)
+                {
+                    await ctx.Channel.SendMessageAsync(ex.Message).ConfigureAwait(false);
+                }
             }
             SendString = "";
         }
@@ -2028,6 +2081,21 @@ namespace DiscordBot
             catch (Exception e)
             {
                 await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
+                        string url = client.DownloadString("https://inspirobot.me/api?generate=true");
+                        client.DownloadFile(url, tempImagePng);
+                    }
+                    await bot.UploadFile(tempImagePng, ctx.Channel);
+                    GiveBotCoin(ctx);
+                }
+                catch (Exception ex)
+                {
+                    await ctx.Channel.SendMessageAsync(ex.Message).ConfigureAwait(false);
+                }
             }
         }
 

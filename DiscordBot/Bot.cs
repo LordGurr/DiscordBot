@@ -59,6 +59,8 @@ namespace DiscordBot
 
         public List<UserGameSave> gameSaves = new List<UserGameSave>();
 
+        public static List<SimpPointSaveData> simpPointSaves = new List<SimpPointSaveData>();
+
         //public VoiceNextExtension Voice { get; set; } //To play music
         public async Task CheckOnline()
         {
@@ -139,7 +141,7 @@ namespace DiscordBot
                 membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
             mem = Client.GetUserAsync(460713383017185292);
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
-                membersChecking.Add(new MemberToCheck(mem.Result, "https://tenor.com/view/hacker-pc-meme-matrix-codes-gif-16730883", "https://tenor.com/view/hacker-pc-meme-matrix-codes-gif-16730883"));
+                membersChecking.Add(new MemberToCheck(mem.Result, "https://media.giphy.com/media/yyQGdaw3ckO7o4NbZZ/giphy.gif", "https://media.giphy.com/media/l3fLnhvHCsDycF5PXH/giphy.gif"));
             var channel = Client.GetChannelAsync(837361660007415828);
             channelForOnlineMessage = channel.Result;
         }
@@ -162,7 +164,7 @@ namespace DiscordBot
             catch (Exception e)
             {
                 Console.WriteLine("Writeline crashed this is the text: " + str);
-                Console.WriteLine("This is very fucking bad and noone will see this. Fuck: " + e.Message + " and Callstack: " + e.StackTrace);
+                Console.WriteLine("This is very fucking bad and no one will see this. Fuck: " + e.Message + " and Callstack: " + e.StackTrace);
             }
         }
 
@@ -1068,6 +1070,68 @@ namespace DiscordBot
             //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
         }
 
+        private async Task ReadSimpPoints()
+        {
+            simpPointSaves = new List<SimpPointSaveData>();
+            string[] tempArray = await File.ReadAllLinesAsync("simppointsave.txt");
+
+            for (int i = 0; i < tempArray.Length; i++)
+            {
+                //if (IsDigitsOnly(tempArray[i], ":-"))
+                //{
+                try
+                {
+                    string[] temp = tempArray[i].Split(" ");
+                    if (temp.Length == 4)
+                    {
+                        ulong name = (ulong)Convert.ToDecimal(temp[0]);
+                        int antalBotCoin = Convert.ToInt32(temp[1]);
+                        DateTime senastTjänadePeng = Convert.ToDateTime(temp[2] + " " + temp[3]);
+                        if (!simpPointSaves.Any(a => a.user == name))
+                        {
+                            simpPointSaves.Add(new SimpPointSaveData(name, antalBotCoin, senastTjänadePeng));
+                        }
+                    }
+                    else if (temp.Length == 5)
+                    {
+                        ulong name = (ulong)Convert.ToDecimal(temp[0]);
+                        int antalBotCoin = Convert.ToInt32(temp[1]);
+                        DateTime senastTjänadePeng = Convert.ToDateTime(temp[2] + " " + temp[3]);
+                        string userName = temp[4];
+                        if (!simpPointSaves.Any(a => a.user == name))
+                        {
+                            simpPointSaves.Add(new SimpPointSaveData(name, antalBotCoin, senastTjänadePeng, userName));
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    await WriteLine(e.Message);
+                }
+                //}
+            }
+            //tw.WriteLine(Convert.ToString(botCoinSaves[i].user) + " " + Convert.ToString(botCoinSaves[i].antalBotCoin) + " " + (botCoinSaves[i].senastTjänadePeng.ToString()));
+        }
+
+        public async Task SaveSimpPoint()
+        {
+            using (TextWriter tw = new StreamWriter("simppointsave.txt"))
+            {
+                for (int i = 0; i < simpPointSaves.Count; i++)
+                {
+                    if (simpPointSaves[i].userName == null)
+                    {
+                        tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()));
+                    }
+                    else
+                    {
+                        tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()) + " " + simpPointSaves[i].userName);
+                    }
+                }
+            }
+            await WriteLine("Sparade alla " + simpPointSaves.Count + " simppoäng användares simppoäng.");
+        }
+
         private async Task ReadGameSaves()
         {
             gameSaves = new List<UserGameSave>();
@@ -1294,6 +1358,65 @@ namespace DiscordBot
             }
         }
 
+        public static int GiveSimpPoint(CommandContext ctx)
+        {
+            int i = SimpPointIndex(ctx);
+            if (i > -1)
+            {
+                if (simpPointSaves[i].userName == null)
+                {
+                    simpPointSaves[i].userName = ctx.Message.Author.Username;
+                }
+                TimeSpan timeSpan = DateTime.Now - simpPointSaves[i].senastTjänadePeng;
+                if (timeSpan.TotalMinutes > 0.2)
+                {
+                    int earnedCoins = 1;
+                    simpPointSaves[i].antalSimpPoint += earnedCoins;
+                    simpPointSaves[i].senastTjänadePeng = DateTime.Now;
+                    return earnedCoins;
+                }
+            }
+            return 0;
+        }
+
+        public static int GiveSimpPoint(DiscordUser user)
+        {
+            int i = SimpPointIndex(user);
+            if (i > -1)
+            {
+                if (simpPointSaves[i].userName == null)
+                {
+                    simpPointSaves[i].userName = user.Username;
+                }
+                TimeSpan timeSpan = DateTime.Now - simpPointSaves[i].senastTjänadePeng;
+                if (timeSpan.TotalMinutes > 0.2)
+                {
+                    int earnedCoins = 1;
+                    simpPointSaves[i].antalSimpPoint += earnedCoins;
+                    simpPointSaves[i].senastTjänadePeng = DateTime.Now;
+                    return earnedCoins;
+                }
+            }
+            return 0;
+        }
+
+        public static int GiveSimpPoint(ulong id)
+        {
+            int i = SimpPointIndex(id);
+            if (i > -1)
+            {
+                TimeSpan timeSpan = DateTime.Now - simpPointSaves[i].senastTjänadePeng;
+                if (timeSpan.TotalMinutes > 0.2)
+                {
+                    int earnedCoins = 1;
+                    simpPointSaves[i].antalSimpPoint += earnedCoins;
+                    simpPointSaves[i].senastTjänadePeng = DateTime.Now;
+                    return earnedCoins;
+                }
+            }
+            return 0;
+        }
+
         public static int AddBotCoins(CommandContext ctx, bool vann)
         {
             int extraPeng = 0;
@@ -1345,6 +1468,42 @@ namespace DiscordBot
             for (int i = 0; i < botCoinSaves.Count; i++)
             {
                 if (botCoinSaves[i].user == ctx.Message.Author.Id)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static int SimpPointIndex(CommandContext ctx)
+        {
+            for (int i = 0; i < simpPointSaves.Count; i++)
+            {
+                if (simpPointSaves[i].user == ctx.Message.Author.Id)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static int SimpPointIndex(DiscordUser user)
+        {
+            for (int i = 0; i < simpPointSaves.Count; i++)
+            {
+                if (simpPointSaves[i].user == user.Id)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static int SimpPointIndex(ulong id)
+        {
+            for (int i = 0; i < simpPointSaves.Count; i++)
+            {
+                if (simpPointSaves[i].user == id)
                 {
                     return i;
                 }
@@ -1892,6 +2051,29 @@ namespace DiscordBot
             {
                 user = _user;
                 antalBotCoin = _antalBotCoin;
+                senastTjänadePeng = _senastTjänadePeng;
+            }
+        }
+
+        public class SimpPointSaveData
+        {
+            public ulong user;
+            public int antalSimpPoint;
+            public DateTime senastTjänadePeng;
+            public string userName;
+
+            public SimpPointSaveData(ulong _user, int _antalSimpPoint, DateTime _senastTjänadePeng, string name)
+            {
+                user = _user;
+                antalSimpPoint = _antalSimpPoint;
+                senastTjänadePeng = _senastTjänadePeng;
+                userName = name;
+            }
+
+            public SimpPointSaveData(ulong _user, int _antalSimpPoint, DateTime _senastTjänadePeng)
+            {
+                user = _user;
+                antalSimpPoint = _antalSimpPoint;
                 senastTjänadePeng = _senastTjänadePeng;
             }
         }
