@@ -139,23 +139,31 @@ namespace DiscordBot
                 membersChecking.Add(new MemberToCheck(mem.Result, "https://giphy.com/gifs/you-bitch-eric-is-online-and-fat-fxNadvGcyUVLPUHHDr", "https://giphy.com/gifs/oh-no-falls-over-eric-the-fat-FVvO4MnXjd8Ya3h420"));
             mem = Client.GetUserAsync(460713383017185292);
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
-                membersChecking.Add(new MemberToCheck(mem.Result, "Gustav gick online", "Gustav gick offline"));
+                membersChecking.Add(new MemberToCheck(mem.Result, "https://tenor.com/view/hacker-pc-meme-matrix-codes-gif-16730883", "https://tenor.com/view/hacker-pc-meme-matrix-codes-gif-16730883"));
             var channel = Client.GetChannelAsync(837361660007415828);
             channelForOnlineMessage = channel.Result;
         }
 
         private static async Task WriteLine(string str)
         {
-            //Utskrivet.Add(str);
-            if (commandLine == null)
+            try
             {
-                var g = statClient.GetChannelAsync(827869624808374293);
-                commandLine = g.Result;
+                //Utskrivet.Add(str);
+                if (commandLine == null)
+                {
+                    var g = statClient.GetChannelAsync(827869624808374293);
+                    commandLine = g.Result;
+                }
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine(str);
+                Console.ForegroundColor = ConsoleColor.White;
+                await commandLine.SendMessageAsync(str).ConfigureAwait(false);
             }
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(str);
-            Console.ForegroundColor = ConsoleColor.White;
-            await commandLine.SendMessageAsync(str).ConfigureAwait(false);
+            catch (Exception e)
+            {
+                Console.WriteLine("Writeline crashed this is the text: " + str);
+                Console.WriteLine("This is very fucking bad and noone will see this. Fuck: " + e.Message + " and Callstack: " + e.StackTrace);
+            }
         }
 
         private async Task WriteLine(string str, DiscordChannel e)
@@ -347,60 +355,84 @@ namespace DiscordBot
         public async Task SaveMembers()
         {
             //BinaryFormatter formatter = new BinaryFormatter();
-            for (int i = 0; i < kanalerna.Count; i++)
-            {
-                string fileName = kanalerna[i].discordChannel.ToString() + ".txt";
-                if (!File.Exists(fileName))
-                {
-                    var temp = File.Create(fileName);
-                    temp.Close();
-                }
-                try
-                {
-                    //using (FileStream stream = File.OpenWrite(fileName))
-                    //{
-                    //    formatter.Serialize(stream, kanalerna[i]);
-                    //}
-                    if (kanalerna[i].finished)
-                    {
-                        using (TextWriter tw = new StreamWriter(fileName))
-                        {
-                            for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
-                            {
-                                tw.WriteLine(kanalerna[i].discordUsers[a].user.ToString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        using (TextWriter tw = new StreamWriter(fileName))
-                        {
-                            for (int a = 0; a < kanalerna[i].membersToAdd.Length; a++)
-                            {
-                                tw.WriteLine(kanalerna[i].membersToAdd[a]);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    await WriteLine(e.Message);
-                }
-            }
-            using (TextWriter tw = new StreamWriter("channels.txt"))
+            try
             {
                 for (int i = 0; i < kanalerna.Count; i++)
                 {
-                    tw.WriteLine(kanalerna[i].discordChannel.ToString() + ".txt");
+                    string fileName = kanalerna[i].discordChannel.ToString() + ".txt";
+                    if (!File.Exists(fileName))
+                    {
+                        try
+                        {
+                            var temp = File.Create(fileName);
+                            temp.Close();
+                        }
+                        catch (Exception e)
+                        {
+                            await WriteLine("Couldn't create file: " + fileName + " and error: " + e.Message + " Callstack: " + e.StackTrace);
+                        }
+                    }
+                    try
+                    {
+                        //using (FileStream stream = File.OpenWrite(fileName))
+                        //{
+                        //    formatter.Serialize(stream, kanalerna[i]);
+                        //}
+                        if (kanalerna[i].finished)
+                        {
+                            using (TextWriter tw = new StreamWriter(fileName))
+                            {
+                                for (int a = 0; a < kanalerna[i].discordUsers.Count; a++)
+                                {
+                                    await tw.WriteLineAsync(kanalerna[i].discordUsers[a].user.ToString());
+                                }
+                                tw.Close();
+                            }
+                        }
+                        else
+                        {
+                            using (TextWriter tw = new StreamWriter(fileName))
+                            {
+                                for (int a = 0; a < kanalerna[i].membersToAdd.Length; a++)
+                                {
+                                    await tw.WriteLineAsync(kanalerna[i].membersToAdd[a]);
+                                }
+                                tw.Close();
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        await WriteLine("Couldn't write file in channel number: " + i + " in document: " + fileName + " error: " + e.Message);
+                    }
                 }
-                tw.WriteLine(kanalerna.Count + " stycken kanaler");
+                using (TextWriter tw = new StreamWriter("channels.txt"))
+                {
+                    try
+                    {
+                        for (int i = 0; i < kanalerna.Count; i++)
+                        {
+                            await tw.WriteLineAsync(kanalerna[i].discordChannel.ToString() + ".txt");
+                        }
+                        tw.WriteLine(kanalerna.Count + " stycken kanaler");
+                        tw.Close();
+                    }
+                    catch (Exception e)
+                    {
+                        await WriteLine("Coudn't write file in channels.txt with error: " + e.Message + " and callstack" + e.StackTrace);
+                    }
+                }
+                int members = 0;
+                for (int i = 0; i < kanalerna.Count; i++)
+                {
+                    members += kanalerna[i].discordUsers.Count;
+                }
+                await WriteLine("Sparade " + kanalerna.Count + " kanaler och " + members + " medlemmar");
             }
-            int members = 0;
-            for (int i = 0; i < kanalerna.Count; i++)
+            catch (Exception e)
             {
-                members += kanalerna[i].discordUsers.Count;
+                await WriteLine("Whole savemembers crashed. This is bad attention now error: " + e.Message + " callstack: " + e.StackTrace);
             }
-            await WriteLine("Sparade " + kanalerna.Count + " kanaler och " + members + " medlemmar");
         }
 
         private static ChannelSaveData Load(string FileName)
