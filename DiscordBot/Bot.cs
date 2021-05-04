@@ -847,6 +847,8 @@ namespace DiscordBot
                     }
                 }
                 await WriteLine("Har läst in " + gameSaves.Count + " användares " + totalGames + " spel.");
+                await ReadSimpPoints();
+                await WriteLine("Har läst in " + simpPointSaves.Count + " användares simppoäng.");
                 await ReadCheckMemebers();
                 await WriteLine("Har läst in " + membersChecking.Count + " som ska få online notiser");
                 TimeSpan timeSpan = DateTime.Now - dateTime;
@@ -941,6 +943,7 @@ namespace DiscordBot
                         await CheckOnline();
                         await UpdateGameSaves();
                         await SaveGameSaves();
+                        await SaveSimpPoint();
                     }
                     catch (Exception e)
                     {
@@ -1115,21 +1118,35 @@ namespace DiscordBot
 
         public async Task SaveSimpPoint()
         {
-            using (TextWriter tw = new StreamWriter("simppointsave.txt"))
+            try
             {
-                for (int i = 0; i < simpPointSaves.Count; i++)
+                using (TextWriter tw = new StreamWriter("simppointsave.txt"))
                 {
-                    if (simpPointSaves[i].userName == null)
+                    for (int i = 0; i < simpPointSaves.Count; i++)
                     {
-                        tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()));
-                    }
-                    else
-                    {
-                        tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()) + " " + simpPointSaves[i].userName);
+                        try
+                        {
+                            if (simpPointSaves[i].userName == null)
+                            {
+                                tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()));
+                            }
+                            else
+                            {
+                                tw.WriteLine(Convert.ToString(simpPointSaves[i].user) + " " + Convert.ToString(simpPointSaves[i].antalSimpPoint) + " " + (simpPointSaves[i].senastTjänadePeng.ToString()) + " " + simpPointSaves[i].userName);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            await WriteLine("Couldn't save simp point user: " + simpPointSaves[i].userName + " error: " + e.Message + " callstack: " + e.StackTrace);
+                        }
                     }
                 }
+                await WriteLine("Sparade alla " + simpPointSaves.Count + " simppoäng användares simppoäng.");
             }
-            await WriteLine("Sparade alla " + simpPointSaves.Count + " simppoäng användares simppoäng.");
+            catch (Exception e)
+            {
+                await WriteLine("Whole savesimppoints crashed: " + e.Message + " callstack: " + e.StackTrace);
+            }
         }
 
         private async Task ReadGameSaves()

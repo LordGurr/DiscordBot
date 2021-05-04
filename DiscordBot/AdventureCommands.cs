@@ -26,6 +26,39 @@ namespace DiscordBot
 
         //private string SendString = "";
 
+        private async Task WriteArrayEmbeed(string[] lines, CommandContext ctx, string title)
+        {
+            int latest = 0;
+            int sent = 0;
+            while (true)
+            {
+                string send = string.Empty;
+                sent++;
+                for (latest = latest; latest < lines.Length; latest++)
+                {
+                    string tempString = send;
+                    tempString += lines[latest];
+                    if (tempString.Length / 2000 >= 1.0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        send = tempString;
+                    }
+                }
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = title + (sent == 0 && latest >= lines.Length ? " part: " + sent : ""),
+                    Description = send,
+                });
+                if (latest >= lines.Length)
+                {
+                    break;
+                }
+            }
+        }
+
         private async Task<List<DiscordUser>> AllUsersInMessage(string command, CommandContext ctx)
         {
             List<string> idlist = command.Split(' ', '\n').ToList();
@@ -1584,6 +1617,14 @@ namespace DiscordBot
             await bot.SaveGameSaves();
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("savesimppoints")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task SaveSimpPoints(CommandContext ctx)
+        {
+            await bot.SaveSimpPoint();
+        }
+
         [DSharpPlus.CommandsNext.Attributes.Command("lastsave")]
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for saving the amount of time you spend in games.")]
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
@@ -2100,7 +2141,7 @@ namespace DiscordBot
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("code")]
-        [DSharpPlus.CommandsNext.Attributes.Aliases("repo", "func", "void")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("repo")]
         public async Task SendCode(CommandContext ctx, string commandName)
         {
             try
@@ -2160,23 +2201,36 @@ namespace DiscordBot
 
                         if ((double)sendCode.Length / 1880 > 1.0)
                         {
-                            double result = Math.Ceiling((double)sendCode.Length / 2048.0);
+                            double result = Math.Ceiling((double)sendCode.Length / 18880.0);
                             int size = (int)((double)sendCode.Length / result);
                             int latest = 0;
-                            for (int i = 0; i < result; i++)
+                            while (true)
                             {
                                 string send = string.Empty;
-                                if (i + 1 >= result)
+                                //if (i + 1 >= result)
+                                //{
+                                //    send = sendCode.Substring(latest, sendCode.Length - latest);
+                                //}
+                                //else
+                                //{
+                                //    send = sendCode.Substring(latest, size);
+                                //}
+                                for (latest = latest; latest < linesToSend.Length; latest++)
                                 {
-                                    send = sendCode.Substring(latest, sendCode.Length - latest);
+                                    string tempString = send;
+                                    tempString += linesToSend[latest];
+                                    if (tempString.Length / 2000 >= 1.0)
+                                    {
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        send = tempString;
+                                    }
                                 }
-                                else
-                                {
-                                    send = sendCode.Substring(latest, size);
-                                }
-                                send = "```cs\n" + send + "\n```";//\n``` ```cs
-                                                                  //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
-                                if (i + 1 >= result)
+                                send = "```cs\n" + send + "\n```";
+                                //sendCode += "\nResten av koden: https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs";
+                                if (latest >= linesToSend.Length)
                                 {
                                     send += "\n[Github länk till koden.](https://github.com/LordGurr/DiscordBot/blob/master/DiscordBot/Bot.cs)";
                                 }
@@ -2187,7 +2241,10 @@ namespace DiscordBot
                                 //    Description = send,
                                 //});
                                 await ctx.Channel.SendMessageAsync(send).ConfigureAwait(false);
-                                latest += size;
+                                if (latest >= linesToSend.Length)
+                                {
+                                    break;
+                                }
                             }
                         }
                         else
