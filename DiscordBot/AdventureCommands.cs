@@ -398,6 +398,7 @@ namespace DiscordBot
         {
             string SendString = string.Empty;
             SendString += WriteLine("Bot namn: " + bot.Client.CurrentApplication.Name/*, ctx*/);
+            SendString += WriteLine("Bot version: 68"/*, ctx*/);
             //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
             //var a = Client.CurrentApplication.Team.Members.ToArray();
             //for (int i = 0; i < a.Length; i++)
@@ -491,6 +492,7 @@ namespace DiscordBot
                 }
             }
             SendString += WriteLine("Har " + botCoinSaves.Count + " botcoin användare");
+            SendString += WriteLine("Har " + simpPointSaves.Count + " simppoäng användare");
             int members = 0;
             for (int i = 0; i < kanalerna.Count; i++)
             {

@@ -1306,21 +1306,24 @@ namespace DiscordBot
                 DiscordPresence presence = save.user.Presence;
                 if (presence != null)
                 {
-                    if (presence.Activities.Count > 0)
+                    if (presence.Status != UserStatus.Offline)
                     {
-                        for (int a = 0; a < presence.Activities.Count; a++)
+                        if (presence.Activities.Count > 0)
                         {
-                            if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                            for (int a = 0; a < presence.Activities.Count; a++)
+                            {
+                                if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
                             {
                                 return true;
                             }
-                        }
-                    }
-                    else
-                    {
-                        if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
-                        {
-                            return true;
                         }
                     }
                 }
@@ -1335,21 +1338,24 @@ namespace DiscordBot
                 DiscordPresence presence = save.user.Presence;
                 if (presence != null)
                 {
-                    if (presence.Activities.Count > 0)
+                    if (presence.Status != UserStatus.Offline)
                     {
-                        for (int a = 0; a < presence.Activities.Count; a++)
+                        if (presence.Activities.Count > 0)
                         {
-                            if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                            for (int a = 0; a < presence.Activities.Count; a++)
                             {
-                                return (presence.Activities[a].Name == gameSave.gameName);
+                                if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                                {
+                                    return (presence.Activities[a].Name == gameSave.gameName);
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                        else
                         {
-                            return presence.Activity.Name == gameSave.gameName;
+                            if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                            {
+                                return presence.Activity.Name == gameSave.gameName;
+                            }
                         }
                     }
                 }
