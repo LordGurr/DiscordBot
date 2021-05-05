@@ -322,7 +322,7 @@ namespace DiscordBot
             SendString += WriteLine("Gateway version: " + bot.Client.GatewayVersion/*, ctx*/);
             SendString += WriteLine("Operativ system: " + Environment.OSVersion/*, ctx*/);
             SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
-            SendString += WriteLine("Bot version: 68"/*, ctx*/);
+            SendString += WriteLine("Bot version: " + botVersion/*, ctx*/);
 #if DEBUG
 
             ScreenShootingShit screenShit = new ScreenShootingShit();
@@ -398,7 +398,7 @@ namespace DiscordBot
         {
             string SendString = string.Empty;
             SendString += WriteLine("Bot namn: " + bot.Client.CurrentApplication.Name/*, ctx*/);
-            SendString += WriteLine("Bot version: 68"/*, ctx*/);
+            SendString += WriteLine("Bot version: " + botVersion/*, ctx*/);
             //await WriteLine("Team name: " + Client.CurrentApplication.Team.Name/*, ctx*/);
             //var a = Client.CurrentApplication.Team.Members.ToArray();
             //for (int i = 0; i < a.Length; i++)
@@ -941,6 +941,7 @@ namespace DiscordBot
                 await bot.UploadFile("emotions.txt", ctx.Channel); // ?upload emotions.txt
                 await bot.UploadFile("citatTemplate.txt", ctx.Channel); // ?upload citatTemplate.txt
                 await bot.UploadFile("botCoinSave.txt", ctx.Channel); // ?upload botCoinSave.txt
+                await bot.UploadFile("simppointsave.txt", ctx.Channel); // ?upload simppointsave.txt
                 await bot.UploadFile("channels.txt", ctx.Channel); // ?upload channels.txt
                 await bot.UploadFile("usergamesaves.txt", ctx.Channel); // ?upload usergamesaves.txt
                 string[] tempArray = await File.ReadAllLinesAsync("channels.txt");
@@ -2120,39 +2121,19 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Sends a generated picture from [tpdne](https://thispersondoesnotexist.com)")]
         public async Task ThisPersonDoesNotExist(CommandContext ctx)
         {
-            //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
-            //attachments.FindAll(x => x.GetType() == typeof(".png"))
-            string SendString = "";
             try
             {
-                //Image image;
                 using (WebClient client = new WebClient())
                 {
-                    SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, "https://thispersondoesnotexist.com/image");
-                    //image = Image.FromFile(tempImage);
+                    client.DownloadFile("https://thispersondoesnotexist.com/image", tempImagePng);
                 }
-
                 await bot.UploadFile(tempImagePng, ctx.Channel);
                 GiveBotCoin(ctx);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
-                try
-                {
-                    using (WebClient client = new WebClient())
-                    {
-                        client.DownloadFile("https://thispersondoesnotexist.com/image", tempImagePng);
-                    }
-                    await bot.UploadFile(tempImagePng, ctx.Channel);
-                    GiveBotCoin(ctx);
-                }
-                catch (Exception ex)
-                {
-                    await ctx.Channel.SendMessageAsync(ex.Message).ConfigureAwait(false);
-                }
+                await ctx.Channel.SendMessageAsync(ex.Message).ConfigureAwait(false);
             }
-            SendString = "";
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("inspirobot")]
@@ -2166,30 +2147,14 @@ namespace DiscordBot
                 {
                     //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
                     string url = client.DownloadString("https://inspirobot.me/api?generate=true");
-                    SaveImage(tempImagePng, System.Drawing.Imaging.ImageFormat.Png, url);
+                    client.DownloadFile(url, tempImagePng);
                 }
                 await bot.UploadFile(tempImagePng, ctx.Channel);
                 GiveBotCoin(ctx);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                await ctx.Channel.SendMessageAsync(e.Message + " callstack " + e.StackTrace).ConfigureAwait(false);
-                string filename = "TempImage.jpg";
-                try
-                {
-                    using (WebClient client = new WebClient())
-                    {
-                        //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
-                        string url = client.DownloadString("https://inspirobot.me/api?generate=true");
-                        client.DownloadFile(url, filename);
-                    }
-                    await bot.UploadFile(filename, ctx.Channel);
-                    GiveBotCoin(ctx);
-                }
-                catch (Exception ex)
-                {
-                    await ctx.Channel.SendMessageAsync("Second try failed too: " + ex.Message + " callstack " + ex.StackTrace).ConfigureAwait(false);
-                }
+                await ctx.Channel.SendMessageAsync(ex.Message + " callstack " + ex.StackTrace).ConfigureAwait(false);
             }
         }
 

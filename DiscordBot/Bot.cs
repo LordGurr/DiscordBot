@@ -52,6 +52,8 @@ namespace DiscordBot
 
         public const string tempImagePng = "screenshotTemp.png";
 
+        public const int botVersion = 70;
+
         public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
         public List<MemberToCheck> membersChecking = new List<MemberToCheck>();
