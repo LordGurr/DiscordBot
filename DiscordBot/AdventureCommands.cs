@@ -98,23 +98,23 @@ namespace DiscordBot
         {
             if (span.TotalDays > 7)
             {
-                return span.Days / 7 + " veck" + (span.Days / 7 > 1 ? "or " : "a ") + span.Days % 7 + " dag" + (span.Days % 7 > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
+                return span.Days / 7 + " veck" + (span.Days / 7 != 1 ? "or " : "a ") + span.Days % 7 + " dag" + (span.Days % 7 != 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours != 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes != 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalDays >= 1)
             {
-                return span.Days + " dag" + (span.Days > 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
+                return span.Days + " dag" + (span.Days != 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours != 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes != 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalHours >= 1)
             {
-                return span.Hours + " timm" + (span.Hours > 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes > 1 ? "er" : "")/*, ctx*/;
+                return span.Hours + " timm" + (span.Hours != 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes != 1 ? "er" : "")/*, ctx*/;
             }
             else if (span.TotalMinutes >= 1)
             {
-                return span.Minutes + " minut" + (span.Minutes > 1 ? "er " : " ") + (int)span.Seconds + " sekund" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
+                return span.Minutes + " minut" + (span.Minutes != 1 ? "er " : " ") + (int)span.Seconds + " sekund" + (span.Seconds != 1 ? "er" : "")/*, ctx*/;
             }
             else
             {
-                return (int)span.TotalSeconds + " sekund" + (span.Seconds > 1 ? "er" : "")/*, ctx*/;
+                return (int)span.TotalSeconds + " sekund" + (span.Seconds != 1 ? "er" : "")/*, ctx*/;
             }
         }
 
@@ -1550,20 +1550,14 @@ namespace DiscordBot
             List<DiscordUser> usersInMessage = task.Result;
             for (int i = 0; i < usersInMessage.Count; i++)
             {
-                int a = SimpPointIndex(ctx);
-                if (a > -1)
+                if (i > 3)
                 {
-                    int points = GiveSimpPoint(usersInMessage[i]);
-                    if (points < 0)
-                    {
-                        await ctx.RespondAsync(usersInMessage[i].Username + " fick simppoäng för mindre än tolv sekunder sen och måste vänta");
-                    }
-                    await ctx.RespondAsync(ctx.Message.Author.Username + " gav " + usersInMessage[i].Username + " " + points + " simppoäng.");
+                    await ctx.RespondAsync("Du kan bara ge fyra personer simppoäng åt gången. Fy " + ctx.Message.Author.Username);
+                    break;
                 }
-                else
+                if (usersInMessage[i].Id != ctx.Message.Author.Id)
                 {
-                    await Sudo(ctx, "simppoint" + usersInMessage[i].Mention);
-                    a = SimpPointIndex(ctx);
+                    int a = SimpPointIndex(ctx);
                     if (a > -1)
                     {
                         int points = GiveSimpPoint(usersInMessage[i]);
@@ -1573,6 +1567,24 @@ namespace DiscordBot
                         }
                         await ctx.RespondAsync(ctx.Message.Author.Username + " gav " + usersInMessage[i].Username + " " + points + " simppoäng.");
                     }
+                    else
+                    {
+                        await Sudo(ctx, "simppoint " + usersInMessage[i].Mention);
+                        a = SimpPointIndex(ctx);
+                        if (a > -1)
+                        {
+                            int points = GiveSimpPoint(usersInMessage[i]);
+                            if (points < 0)
+                            {
+                                await ctx.RespondAsync(usersInMessage[i].Username + " fick simppoäng för mindre än tolv sekunder sen och måste vänta");
+                            }
+                            await ctx.RespondAsync(ctx.Message.Author.Username + " gav " + usersInMessage[i].Username + " " + points + " simppoäng.");
+                        }
+                    }
+                }
+                else
+                {
+                    await ctx.RespondAsync("Fy på dig " + ctx.Message.Author.Username + ". Du kan inte ge dig själv poäng");
                 }
             }
             GiveBotCoin(ctx);
@@ -1668,6 +1680,42 @@ namespace DiscordBot
                 else
                 {
                     SendString += WriteLine("Botcoin: " + temp[a].antalBotCoin + " " + temp[a].userName);
+                }
+            }
+            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            {
+                Title = "Leaderboard",
+                Description = SendString,
+            });
+            GiveBotCoin(ctx);
+        }
+
+        [DSharpPlus.CommandsNext.Attributes.Command("simppointleaderboard")]
+        [DSharpPlus.CommandsNext.Attributes.Aliases("simppointleader", "simpboard", "simpleaderboard", "simpleader")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
+        public async Task SimpPointLeaderBoard(CommandContext ctx)
+        {
+            int i = BotCoinIndex(ctx);
+            if (i > -1)
+            {
+                if (simpPointSaves[i].userName == null)
+                {
+                    simpPointSaves[i].userName = ctx.Message.Author.Username;
+                }
+            }
+            List<SimpPointSaveData> temp = new List<SimpPointSaveData>();
+            temp.InsertRange(0, simpPointSaves);
+            temp = temp.OrderByDescending(a => a.antalSimpPoint).ToList();
+            string SendString = string.Empty;
+            for (int a = 0; a < temp.Count; a++)
+            {
+                if (temp[a].userName == null)
+                {
+                    SendString += WriteLine("Simppoints: " + temp[a].antalSimpPoint + " ");
+                }
+                else
+                {
+                    SendString += WriteLine("Simppoints: " + temp[a].antalSimpPoint + " " + temp[a].userName);
                 }
             }
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
@@ -2002,7 +2050,7 @@ namespace DiscordBot
             //Doesn't work yet    //List<DiscordAttachment> attachments = (List<DSharpPlus.Entities.DiscordAttachment>)ctx.Message.Attachments;
             //attachments.FindAll(x => x.GetType() == typeof(".png"))
             string SendString = "";
-            Image image = Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
+            Image image = Image.FromFile(tempImagePng);
             try
             {
                 if (ctx.Message.Attachments.Count > 0)
@@ -2014,11 +2062,12 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(e.Message + " callstack " + e.StackTrace).ConfigureAwait(false);
                 return;
             }
             try
             {
+                //image ??= Image.FromFile(@"C:\Users\gustav.juul\Pictures\GaleBackup\ToadSpriteRightJump.png");
                 FrameDimension dimension = new FrameDimension(image.FrameDimensionsList[0]);
 
                 int frameCount = image.GetFrameCount(dimension);
@@ -2121,21 +2170,22 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                await ctx.Channel.SendMessageAsync(e.Message + " callstack " + e.StackTrace).ConfigureAwait(false);
+                string filename = "TempImage.jpg";
                 try
                 {
                     using (WebClient client = new WebClient())
                     {
                         //client.DownloadFile(new Uri(url), @"c:\temp\image35.png");
                         string url = client.DownloadString("https://inspirobot.me/api?generate=true");
-                        client.DownloadFile(url, tempImagePng);
+                        client.DownloadFile(url, filename);
                     }
-                    await bot.UploadFile(tempImagePng, ctx.Channel);
+                    await bot.UploadFile(filename, ctx.Channel);
                     GiveBotCoin(ctx);
                 }
                 catch (Exception ex)
                 {
-                    await ctx.Channel.SendMessageAsync(ex.Message).ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Second try failed too: " + ex.Message + " callstack " + ex.StackTrace).ConfigureAwait(false);
                 }
             }
         }

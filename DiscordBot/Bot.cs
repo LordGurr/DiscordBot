@@ -1206,15 +1206,35 @@ namespace DiscordBot
                     if (gameSaves[i].user.Presence != null)
                     {
                         DiscordPresence presence = gameSaves[i].user.Presence;
-                        if (presence != null)
+                        if (presence.Status != UserStatus.Offline)
                         {
-                            if (presence.Activities.Count > 0)
+                            if (presence != null)
                             {
-                                for (int a = 0; a < presence.Activities.Count; a++)
+                                if (presence.Activities.Count > 0)
                                 {
-                                    if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                                    for (int a = 0; a < presence.Activities.Count; a++)
                                     {
-                                        int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                                        if (presence.Activities[a].ActivityType == ActivityType.Playing && presence.Activities[a].Name != null)
+                                        {
+                                            int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activities[a].Name);
+                                            TimeSpan timeSpan = DateTime.Now - lastSave;
+                                            if (index >= 0)
+                                            {
+                                                gameSaves[i].games[index].IncreaseTime(timeSpan);
+                                            }
+                                            else
+                                            {
+                                                gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                                            }
+                                            peoplePlaying++;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                                    {
+                                        int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
                                         TimeSpan timeSpan = DateTime.Now - lastSave;
                                         if (index >= 0)
                                         {
@@ -1222,27 +1242,10 @@ namespace DiscordBot
                                         }
                                         else
                                         {
-                                            gameSaves[i].games.Add(new GameTimeSave(presence.Activities[a].Name, timeSpan));
+                                            gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
                                         }
                                         peoplePlaying++;
                                     }
-                                }
-                            }
-                            else
-                            {
-                                if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
-                                {
-                                    int index = gameSaves[i].games.FindIndex(o => o.gameName == presence.Activity.Name);
-                                    TimeSpan timeSpan = DateTime.Now - lastSave;
-                                    if (index >= 0)
-                                    {
-                                        gameSaves[i].games[index].IncreaseTime(timeSpan);
-                                    }
-                                    else
-                                    {
-                                        gameSaves[i].games.Add(new GameTimeSave(presence.Activity.Name, timeSpan));
-                                    }
-                                    peoplePlaying++;
                                 }
                             }
                         }
