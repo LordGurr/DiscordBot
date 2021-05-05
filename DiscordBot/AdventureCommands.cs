@@ -322,6 +322,7 @@ namespace DiscordBot
             SendString += WriteLine("Gateway version: " + bot.Client.GatewayVersion/*, ctx*/);
             SendString += WriteLine("Operativ system: " + Environment.OSVersion/*, ctx*/);
             SendString += WriteLine(".Net version: " + Environment.Version/*, ctx*/);
+            SendString += WriteLine("Bot version: 68"/*, ctx*/);
 #if DEBUG
 
             ScreenShootingShit screenShit = new ScreenShootingShit();
