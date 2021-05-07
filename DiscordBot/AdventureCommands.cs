@@ -2470,14 +2470,9 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Command("math")]
         [DSharpPlus.CommandsNext.Attributes.Aliases("matte")]
         [DSharpPlus.CommandsNext.Attributes.Description("Löser simpla matematiska uttryck.\nFunkar inte med variabler och bara med heltal.\n kräver * före och efter parentes.\nExempel: ?math (2*2)^8")]
-        public async Task MathExpress(CommandContext ctx)
+        public async Task MathExpress(CommandContext ctx, [RemainingText] string result)
         {
-            string result = ctx.Message.Content.Replace("?math", "");
-            //if (!IsDigitsOnly(result, "()^*/+-.,%"))
-            //{
-            //    await ctx.Channel.SendMessageAsync("String was inputted incorectly").ConfigureAwait(false);
-            //    return;
-            //}
+            //string result = ctx.Message.Content.Replace("?math", "");
             try
             {
                 double answer = Eval(result);
@@ -2541,13 +2536,6 @@ namespace DiscordBot
                 }
                 else
                 {
-                    //if (token.Contains('(') || token.Contains(')'))
-                    //{
-                    //    string newToken = token.Replace("(", string.Empty).Replace(")", string.Empty);
-                    //    operandStack.Push(double.Parse(newToken));
-                    //}
-                    //else
-                    //{
                     if (IsDigitsOnly(token, ","))
                     {
                         operandStack.Push(Convert.ToDouble(token));
@@ -2556,7 +2544,6 @@ namespace DiscordBot
                     {
                         operandStack.Push(ChooseConst(token));
                     }
-                    //}
                 }
                 tokenIndex += 1;
             }
@@ -2611,7 +2598,6 @@ namespace DiscordBot
             StringBuilder sb = new StringBuilder();
             string newExpress = expression.Replace(" ", string.Empty);
             for (int i = 0; i < newExpress.Length; i++)
-            //foreach (char c in expression.Replace(" ", string.Empty))
             {
                 char c = newExpress[i];
                 if (operators.IndexOf(c) >= 0)
@@ -2701,13 +2687,7 @@ namespace DiscordBot
             {
                 return (double)champ;
             }
-            //else if (str.ToLower().Contains('e') || str.ToLower().Contains("pi") || str.ToLower().Contains("tau"))
-            //{
-            //    if (ContainsOneConstant(str.ToLower()).Item1)
-            //    {
-            //    }
-            //}
-            throw new Exception("No constant matches: " + str);
+            throw new Exception("No mathematical constant matches: " + str);
         }
 
         private static int ConstantLengthFrom(char c)
