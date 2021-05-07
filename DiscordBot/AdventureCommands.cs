@@ -2473,11 +2473,11 @@ namespace DiscordBot
         public async Task MathExpress(CommandContext ctx)
         {
             string result = ctx.Message.Content.Replace("?math", "");
-            if (!IsDigitsOnly(result, "()^*/+-.,"))
-            {
-                await ctx.Channel.SendMessageAsync("String was inputted incorectly").ConfigureAwait(false);
-                return;
-            }
+            //if (!IsDigitsOnly(result, "()^*/+-.,%"))
+            //{
+            //    await ctx.Channel.SendMessageAsync("String was inputted incorectly").ConfigureAwait(false);
+            //    return;
+            //}
             try
             {
                 double answer = Eval(result);
@@ -2490,22 +2490,29 @@ namespace DiscordBot
             GiveBotCoin(ctx);
         }
 
-        private string[] _operators = { "-", "+", "/", "*", "^" };
+        private const decimal champ = 0.123456789101112m;
 
-        private Func<double, double, double>[] _operations = {
+        private static string[] _operators = { "-", "+", "/", "*", "^", "%" };
+
+        private static string[] mathConst = { "e", "pi", "tau", "champ", "champerowne" };
+
+        private static Func<double, double, double>[] _operations = {
         (a1, a2) => a1 - a2,
         (a1, a2) => a1 + a2,
         (a1, a2) => a1 / a2,
         (a1, a2) => a1 * a2,
-        (a1, a2) => Math.Pow(a1, a2)
+        (a1, a2) => Math.Pow(a1, a2),
+        (a1, a2) => a1 % a2,
     };
 
-        public double Eval(string expression)
+        public static double Eval(string expression)
         {
+            expression = expression.Replace('.', ',');
             List<string> tokens = getTokens(expression);
             Stack<double> operandStack = new Stack<double>();
             Stack<string> operatorStack = new Stack<string>();
             int tokenIndex = 0;
+            MakeEverySecondOperator(tokens);
 
             while (tokenIndex < tokens.Count)
             {
@@ -2534,7 +2541,22 @@ namespace DiscordBot
                 }
                 else
                 {
-                    operandStack.Push(double.Parse(token));
+                    //if (token.Contains('(') || token.Contains(')'))
+                    //{
+                    //    string newToken = token.Replace("(", string.Empty).Replace(")", string.Empty);
+                    //    operandStack.Push(double.Parse(newToken));
+                    //}
+                    //else
+                    //{
+                    if (IsDigitsOnly(token, ","))
+                    {
+                        operandStack.Push(Convert.ToDouble(token));
+                    }
+                    else
+                    {
+                        operandStack.Push(ChooseConst(token));
+                    }
+                    //}
                 }
                 tokenIndex += 1;
             }
@@ -2549,7 +2571,7 @@ namespace DiscordBot
             return operandStack.Pop();
         }
 
-        private string getSubExpression(List<string> tokens, ref int index)
+        private static string getSubExpression(List<string> tokens, ref int index)
         {
             StringBuilder subExpr = new StringBuilder();
             int parenlevels = 1;
@@ -2582,14 +2604,16 @@ namespace DiscordBot
             return subExpr.ToString();
         }
 
-        private List<string> getTokens(string expression)
+        private static List<string> getTokens(string expression)
         {
-            string operators = "()^*/+-";
+            string operators = string.Join("", _operators); //"()^*/+-%";
             List<string> tokens = new List<string>();
             StringBuilder sb = new StringBuilder();
-
-            foreach (char c in expression.Replace(" ", string.Empty))
+            string newExpress = expression.Replace(" ", string.Empty);
+            for (int i = 0; i < newExpress.Length; i++)
+            //foreach (char c in expression.Replace(" ", string.Empty))
             {
+                char c = newExpress[i];
                 if (operators.IndexOf(c) >= 0)
                 {
                     if ((sb.Length > 0))
@@ -2598,8 +2622,55 @@ namespace DiscordBot
                         sb.Length = 0;
                     }
                     tokens.Add(c.ToString());
+                    continue;
                 }
-                else
+                else if (c == '(' && i > 0 && IsDigitsOnly(newExpress[i - 1].ToString(), string.Empty) || c == ')' && i + 1 < newExpress.Length && IsDigitsOnly(newExpress[i + 1].ToString(), string.Empty))
+                {
+                    if (c == '(' && i > 0 && IsDigitsOnly(newExpress[i - 1].ToString(), string.Empty))
+                    {
+                        if ((sb.Length > 0))
+                        {
+                            tokens.Add(sb.ToString());
+                            sb.Length = 0;
+                        }
+                        tokens.Add("*");
+                    }
+                    else
+                    {
+                        if ((sb.Length > 0))
+                        {
+                            tokens.Add(sb.ToString());
+                            sb.Length = 0;
+                        }
+                        tokens.Add(c.ToString());
+                        tokens.Add("*");
+                    }
+                    continue;
+                }
+                if (c == '(' || c == ')')
+                {
+                    if ((sb.Length > 0))
+                    {
+                        tokens.Add(sb.ToString());
+                        sb.Length = 0;
+                    }
+                    if (i > 0 && newExpress[i - 1] == ')' && c == '(')
+                    {
+                        tokens.Add("*");
+                    }
+                    tokens.Add(c.ToString());
+                }
+                else if (IsFirstLetterOfConstant(c))
+                {
+                    if ((sb.Length > 0))
+                    {
+                        tokens.Add(sb.ToString());
+                        sb.Length = 0;
+                    }
+                    tokens.Add(newExpress.Substring(i, ConstantLengthFrom(c)));
+                    i += ConstantLengthFrom(c) - 1;
+                }
+                else if (operators.IndexOf(c) < 0)
                 {
                     sb.Append(c);
                 }
@@ -2610,6 +2681,74 @@ namespace DiscordBot
                 tokens.Add(sb.ToString());
             }
             return tokens;
+        }
+
+        private static double ChooseConst(string str)
+        {
+            if (str.ToLower() == "e")
+            {
+                return Math.E;
+            }
+            else if (str.ToLower() == "pi")
+            {
+                return Math.PI;
+            }
+            else if (str.ToLower() == "tau")
+            {
+                return 2 * Math.PI;
+            }
+            else if (str.ToLower() == "champ" || str.ToLower() == "champerowne")
+            {
+                return (double)champ;
+            }
+            //else if (str.ToLower().Contains('e') || str.ToLower().Contains("pi") || str.ToLower().Contains("tau"))
+            //{
+            //    if (ContainsOneConstant(str.ToLower()).Item1)
+            //    {
+            //    }
+            //}
+            throw new Exception("No constant matches: " + str);
+        }
+
+        private static int ConstantLengthFrom(char c)
+        {
+            for (int i = 0; i < mathConst.Length; i++)
+            {
+                if (c == mathConst[i][0])
+                {
+                    return mathConst[i].Length;
+                }
+            }
+            return 0;
+        }
+
+        private static void MakeEverySecondOperator(List<string> tokens)
+        {
+            string operators = string.Join("", _operators); //"()^*/+-%";
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                if (i > 0 /*&& i + 1 < tokens.Count*/)
+                {
+                    if ((i < 1 || operators.IndexOf(tokens[i - 1]) < 0) && (i + 1 >= tokens.Count || operators.IndexOf(tokens[i + 1]) < 0) && operators.IndexOf(tokens[i]) < 0)
+                    {
+                        tokens.Insert(i, "*");
+                    }
+                }
+            }
+            //return tokens;
+        }
+
+        private static bool IsFirstLetterOfConstant(char c)
+        {
+            for (int i = 0; i < mathConst.Length; i++)
+            {
+                if (c == mathConst[i][0])
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("rockpaperscissor")]

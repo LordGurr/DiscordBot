@@ -785,7 +785,7 @@ namespace DiscordBot
                    await e.Message.RespondAsync("All hail the motherland!").ConfigureAwait(false);
                else if (e.Message.Content.ToLower().Contains("när är"))
                    await e.Message.RespondAsync("Imorgon.").ConfigureAwait(false);
-               else if (e.Message.Content.ToLower().Contains("prov") && !e.Message.Content.ToLower().Contains("gick") && !e.Message.Content.ToLower().Contains("ute") && !e.Message.Content.ToLower().Contains("resultat") && !e.Message.Content.ToLower().Contains("prova") && !e.Message.Content.ToLower().Contains("proved") && !e.Message.Content.ToLower().Contains("tillbaka"))
+               else if ((e.Message.Content.ToLower().Contains("prov") || e.Message.Content.ToLower().Contains("läx")) && !e.Message.Content.ToLower().Contains("gick") && !e.Message.Content.ToLower().Contains("ute") && !e.Message.Content.ToLower().Contains("resultat") && !e.Message.Content.ToLower().Contains("prova") && !e.Message.Content.ToLower().Contains("proved") && !e.Message.Content.ToLower().Contains("tillbaka"))
                    await e.Message.RespondAsync("hoppas du pluggar").ConfigureAwait(false);
                else if (e.Message.MentionEveryone || e.Message.MentionedUsers.Count > 10)
                    await e.Message.RespondAsync("That's not cool.").ConfigureAwait(false);
@@ -793,7 +793,7 @@ namespace DiscordBot
                {
                    await e.Message.RespondAsync("You called...\nSkriv ?help för att se vad jag kan göra.").ConfigureAwait(false);
                }
-               else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!") || e.Message.Content.ToLower().StartsWith("hi") && e.Message.Content.ToLower().EndsWith("!") && e.Author.Id == 503720029456695306/* Dad bot's id */)
+               else if (e.Message.Content.ToLower().EndsWith("i'm pappa!") || e.Message.Content.ToLower().EndsWith("i'm dad!") || e.Message.Content.ToLower().StartsWith("hi") && e.Message.Content.ToLower().EndsWith("!") /*&& e.Author.Id == 503720029456695306 Dad bot's id */)
                    await e.Message.RespondAsync("Hej " + e.Author.Username + "...").ConfigureAwait(false);
            };
             await Reload();
@@ -1208,9 +1208,9 @@ namespace DiscordBot
                     if (gameSaves[i].user.Presence != null)
                     {
                         DiscordPresence presence = gameSaves[i].user.Presence;
-                        if (presence.Status != UserStatus.Offline)
+                        if (presence != null)
                         {
-                            if (presence != null)
+                            if (presence.Status != UserStatus.Offline)
                             {
                                 if (presence.Activities.Count > 0)
                                 {
@@ -1320,13 +1320,13 @@ namespace DiscordBot
                                 }
                             }
                         }
-                        else
-                        {
-                            if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
-                            {
-                                return true;
-                            }
-                        }
+                        //else
+                        //{
+                        //    if (presence.Activity.ActivityType == ActivityType.Playing && presence.Activity.Name != null)
+                        //    {
+                        //        return true;
+                        //    }
+                        //}
                     }
                 }
             }
