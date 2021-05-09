@@ -96,7 +96,7 @@ namespace DiscordBot
 
         private string TimespanToString(TimeSpan span)
         {
-            if (span.TotalDays > 7)
+            if (span.TotalDays >= 7)
             {
                 return span.Days / 7 + " veck" + (span.Days / 7 != 1 ? "or " : "a ") + span.Days % 7 + " dag" + (span.Days % 7 != 1 ? "ar " : " ") + span.Hours + " timm" + (span.Hours != 1 ? "ar " : "e ") + span.Minutes + " minut" + (span.Minutes != 1 ? "er" : "")/*, ctx*/;
             }
@@ -2498,7 +2498,7 @@ namespace DiscordBot
         (a1, a2) => a1 * a2,
         (a1, a2) => Math.Pow(a1, a2),
         (a1, a2) => a1 % a2,
-    };
+        };
 
         public static double Eval(string expression)
         {

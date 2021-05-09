@@ -63,6 +63,8 @@ namespace DiscordBot
 
         public static List<SimpPointSaveData> simpPointSaves = new List<SimpPointSaveData>();
 
+        public List<Command> commandNames = new List<Command>();
+
         //public VoiceNextExtension Voice { get; set; } //To play music
         public async Task CheckOnline()
         {
@@ -884,6 +886,29 @@ namespace DiscordBot
                 //await WriteLine("Boten är uppkopplad och redo för kommandon.");
                 Thread t = new Thread(async () => await LoadAllTheChannels());
                 t.Start();
+                List<KeyValuePair<string, Command>> commandnames = Commands.RegisteredCommands.ToList();
+                for (int i = 0; i < commandnames.Count; i++)
+                {
+                    commandNames.Add(commandnames[i].Value);
+                }
+            };
+            Client.MessageCreated += async (e, a) =>
+            {
+                if (a.Message.Content.StartsWith(configJson.Prefix))
+                {
+                    string commandstring = a.Message.Content;
+                    commandstring = commandstring.Remove(0, 1);
+                    string toCheck = commandstring.Split()[0];
+                    for (int i = 0; i < commandNames.Count; i++)
+                    {
+                        string commandName = commandNames[i].Name;
+
+                        for (int b = 0; b < commandNames[i].Aliases.Count; b++)
+                        {
+                            commandName = commandNames[i].Aliases[b];
+                        }
+                    }
+                }
             };
             //Client.GuildMemberUpdated += async (e, a) =>
             //{
@@ -975,6 +1000,58 @@ namespace DiscordBot
 #endif
             await Client.DisconnectAsync();
             Client.Dispose();
+        }
+
+        private bool IsSimiliarEnough(string commandstring, string commandName, string toCheck)
+        {
+            if (commandName.Length + 2 < commandstring.Length)
+            {
+                toCheck = commandstring.Substring(0, commandName.Length + 3);
+            }
+            int howSimilar = Compute(toCheck.Replace(" ", ""), commandName);
+            if (howSimilar <= 2 && howSimilar >= 1)
+            {
+                Console.WriteLine("Did you mean: " + commandName);
+                //Console.WriteLine(commandstring + " is " + howSimilar + " similar to " + commands[i].name);
+                return true;
+            }
+            return false;
+        }
+
+        public static int Compute(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                if (string.IsNullOrEmpty(t))
+                    return 0;
+                return t.Length;
+            }
+
+            if (string.IsNullOrEmpty(t))
+            {
+                return s.Length;
+            }
+
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            // initialize the top and right of the table to 0, 1, 2, ...
+            for (int i = 0; i <= n; d[i, 0] = i++) ;
+            for (int j = 1; j <= m; d[0, j] = j++) ;
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                    int min1 = d[i - 1, j] + 1;
+                    int min2 = d[i, j - 1] + 1;
+                    int min3 = d[i - 1, j - 1] + cost;
+                    d[i, j] = Math.Min(Math.Min(min1, min2), min3);
+                }
+            }
+            return d[n, m];
         }
 
         public static bool IsDigitsOnly(string str, string operators) //Den här kollar så att det bara finns nummer eller mellanslag i passwordet. Om inte för denna så skulle spelet krasha om du skrev en bokstav.
