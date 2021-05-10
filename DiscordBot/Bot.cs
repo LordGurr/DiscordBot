@@ -894,7 +894,7 @@ namespace DiscordBot
             };
             Client.MessageCreated += async (e, a) =>
             {
-                if (a.Message.Content.StartsWith(configJson.Prefix))
+                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Split()[0].Length > 3)
                 {
                     Thread t = new Thread(() => CheckSimiliar(e, a));
                     t.Start();
@@ -975,15 +975,15 @@ namespace DiscordBot
             }
             if (isAdding)
             {
-                await WriteLine("Väntar på att ladda in medlemmar ");
+                await WriteLine("Väntar på att ladda in medlemmar");
                 while (isAdding)
                 {
                     await Task.Delay(5000);
                 }
             }
+#if DEBUG
             MessageCreateEventArgs message;
             message = null;
-#if DEBUG
             await TakeScreenshotAndUploadApplication(message, Process.GetCurrentProcess().MainWindowHandle);
 #else
             await WriteLine("Should screenshot here buut because of pi will just say this");
@@ -994,6 +994,8 @@ namespace DiscordBot
 
         private void CheckSimiliar(DiscordClient e, MessageCreateEventArgs a)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             string commandstring = a.Message.Content;
             commandstring = commandstring.Remove(0, 1);
             for (int i = 0; i < commandNames.Count; i++)
@@ -1001,7 +1003,7 @@ namespace DiscordBot
                 string commandName = commandNames[i].Name;
                 if (commandstring.StartsWith(commandName[0]))
                 {
-                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName))
+                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
                     {
                         return;
                     }
@@ -1011,16 +1013,17 @@ namespace DiscordBot
                     commandName = commandNames[i].Aliases[b];
                     if (commandstring.StartsWith(commandName[0]))
                     {
-                        if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName))
+                        if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
                         {
                             return;
                         }
                     }
                 }
             }
+            WriteLine("Tog " + AdventureCommands.TimespanToString(stopwatch.Elapsed) + " att iterera alla " + commandNames.Count + " kommandon och hittade ingen");
         }
 
-        private bool IsSimiliarEnough(string commandstring, string commandName)
+        private bool IsSimiliarEnough(string commandstring, string commandName, DiscordChannel channel)
         {
             string toCheck = commandstring.Split()[0];
             if (commandName.Length + 2 < commandstring.Length)
@@ -1030,7 +1033,7 @@ namespace DiscordBot
             int howSimilar = Compute(toCheck.Replace(" ", ""), commandName);
             if (howSimilar <= 2 && howSimilar >= 1 && !toCheck.Contains(commandName))
             {
-                Console.WriteLine("Did you mean: " + commandName);
+                WriteLine("Did you mean: " + commandName, channel);
                 //Console.WriteLine(commandstring + " is " + howSimilar + " similar to " + commands[i].name);
                 return true;
             }
@@ -1097,7 +1100,7 @@ namespace DiscordBot
                         }
                     }
                 }
-                else if (!containsNumber && c > '0' && c < '9')
+                else if (!containsNumber && c >= '0' && c <= '9')
                 {
                     containsNumber = true;
                 }
