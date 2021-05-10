@@ -896,18 +896,8 @@ namespace DiscordBot
             {
                 if (a.Message.Content.StartsWith(configJson.Prefix))
                 {
-                    string commandstring = a.Message.Content;
-                    commandstring = commandstring.Remove(0, 1);
-                    string toCheck = commandstring.Split()[0];
-                    for (int i = 0; i < commandNames.Count; i++)
-                    {
-                        string commandName = commandNames[i].Name;
-
-                        for (int b = 0; b < commandNames[i].Aliases.Count; b++)
-                        {
-                            commandName = commandNames[i].Aliases[b];
-                        }
-                    }
+                    Thread t = new Thread(() => CheckSimiliar(e, a));
+                    t.Start();
                 }
             };
             //Client.GuildMemberUpdated += async (e, a) =>
@@ -1002,14 +992,43 @@ namespace DiscordBot
             Client.Dispose();
         }
 
-        private bool IsSimiliarEnough(string commandstring, string commandName, string toCheck)
+        private void CheckSimiliar(DiscordClient e, MessageCreateEventArgs a)
         {
+            string commandstring = a.Message.Content;
+            commandstring = commandstring.Remove(0, 1);
+            for (int i = 0; i < commandNames.Count; i++)
+            {
+                string commandName = commandNames[i].Name;
+                if (commandstring.StartsWith(commandName[0]))
+                {
+                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName))
+                    {
+                        return;
+                    }
+                }
+                for (int b = 0; b < commandNames[i].Aliases.Count; b++)
+                {
+                    commandName = commandNames[i].Aliases[b];
+                    if (commandstring.StartsWith(commandName[0]))
+                    {
+                        if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName))
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        private bool IsSimiliarEnough(string commandstring, string commandName)
+        {
+            string toCheck = commandstring.Split()[0];
             if (commandName.Length + 2 < commandstring.Length)
             {
                 toCheck = commandstring.Substring(0, commandName.Length + 3);
             }
             int howSimilar = Compute(toCheck.Replace(" ", ""), commandName);
-            if (howSimilar <= 2 && howSimilar >= 1)
+            if (howSimilar <= 2 && howSimilar >= 1 && !toCheck.Contains(commandName))
             {
                 Console.WriteLine("Did you mean: " + commandName);
                 //Console.WriteLine(commandstring + " is " + howSimilar + " similar to " + commands[i].name);
