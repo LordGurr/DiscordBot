@@ -894,7 +894,7 @@ namespace DiscordBot
             };
             Client.MessageCreated += async (e, a) =>
             {
-                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Split()[0].Length > 3)
+                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Remove(0, 1).Split()[0].Length > 3)
                 {
                     Thread t = new Thread(() => CheckSimiliar(e, a));
                     t.Start();
