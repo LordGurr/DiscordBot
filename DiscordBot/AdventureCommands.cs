@@ -351,7 +351,7 @@ namespace DiscordBot
         //Lägger till fler brackets för att fixa koden }}}}
         [DSharpPlus.CommandsNext.Attributes.Command("system")]
         [DSharpPlus.CommandsNext.Attributes.Description("Returns system info.")]
-        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        //[DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task SystemInfo(CommandContext ctx)
         {
             string SendString = string.Empty;
@@ -410,7 +410,6 @@ namespace DiscordBot
             //{
             //    Name = "help"
             //};
-
             await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             {
                 Title = "System info",
@@ -432,7 +431,7 @@ namespace DiscordBot
 
         [DSharpPlus.CommandsNext.Attributes.Command("bot")]
         [DSharpPlus.CommandsNext.Attributes.Description("Returns system info.")]
-        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        //[DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task BotInfo(CommandContext ctx)
         {
             string SendString = string.Empty;
