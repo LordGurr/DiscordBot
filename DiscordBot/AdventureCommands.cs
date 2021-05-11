@@ -309,6 +309,45 @@ namespace DiscordBot
             }
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("commands")]
+        [DSharpPlus.CommandsNext.Attributes.Description("Returns all commands stored.")]
+        [DSharpPlus.CommandsNext.Attributes.RequireOwner]
+        public async Task WriteCommands(CommandContext ctx)
+        {
+            if (!bot.stopAll)
+            {
+                try
+                {
+                    for (int i = 0; i < bot.commandNames.Count; i++)
+                    {
+                        string SendString = string.Empty;
+                        //await WriteLine("kanal " + (i + 1) + ": " + kanalerna[i].realDiscordChannel.Name);
+                        //SendString += WriteLine(bot.commandNames[i].Name);
+                        string title = WriteLine(bot.commandNames[i].Name);
+                        SendString = string.Empty;
+                        for (int a = 0; a < bot.commandNames[i].Aliases.Count; a++)
+                        {
+                            SendString += WriteLine("alias " + (a + 1) + ": " + bot.commandNames[i].Aliases[a]);
+                            //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
+                        }
+                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                        {
+                            Title = title,
+                            Description = SendString,
+                        });
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.Channel.SendMessageAsync(e.Message).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await ctx.Channel.SendMessageAsync("bot shutting down").ConfigureAwait(false);
+            }
+        }
+
         //Lägger till fler brackets för att fixa koden }}}}
         [DSharpPlus.CommandsNext.Attributes.Command("system")]
         [DSharpPlus.CommandsNext.Attributes.Description("Returns system info.")]
