@@ -998,24 +998,50 @@ namespace DiscordBot
             stopwatch.Start();
             string commandstring = a.Message.Content;
             commandstring = commandstring.Remove(0, 1);
+            bool isCommand = false;
             for (int i = 0; i < commandNames.Count; i++)
             {
                 string commandName = commandNames[i].Name;
-                if (commandstring.StartsWith(commandName[0]))
+                if (commandstring.StartsWith(commandName))
                 {
-                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
-                    {
-                        return;
-                    }
+                    isCommand = true;
+                    break;
                 }
                 for (int b = 0; b < commandNames[i].Aliases.Count; b++)
                 {
                     commandName = commandNames[i].Aliases[b];
+                    if (commandstring.StartsWith(commandName))
+                    {
+                        isCommand = true;
+                        break;
+                    }
+                }
+                if (isCommand)
+                {
+                    break;
+                }
+            }
+            if (!isCommand)
+            {
+                for (int i = 0; i < commandNames.Count; i++)
+                {
+                    string commandName = commandNames[i].Name;
                     if (commandstring.StartsWith(commandName[0]))
                     {
                         if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
                         {
                             return;
+                        }
+                    }
+                    for (int b = 0; b < commandNames[i].Aliases.Count; b++)
+                    {
+                        commandName = commandNames[i].Aliases[b];
+                        if (commandstring.StartsWith(commandName[0]))
+                        {
+                            if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
+                            {
+                                return;
+                            }
                         }
                     }
                 }
