@@ -52,7 +52,7 @@ namespace DiscordBot
 
         public const string tempImagePng = "screenshotTemp.png";
 
-        public const int botVersion = 70;
+        public const int botVersion = 81;
 
         public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
@@ -894,7 +894,7 @@ namespace DiscordBot
             };
             Client.MessageCreated += async (e, a) =>
             {
-                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Remove(0, 1).Split()[0].Length > 3)
+                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Remove(0, 1).Split()[0].Length > 2)
                 {
                     Thread t = new Thread(() => CheckSimiliar(e, a));
                     t.Start();
