@@ -168,7 +168,7 @@ namespace DiscordBot
             catch (Exception e)
             {
                 Console.WriteLine("Writeline crashed this is the text: " + str);
-                Console.WriteLine("This is very fucking bad and no one will see this. Fuck: " + e.Message + " and Callstack: " + e.StackTrace);
+                Console.WriteLine("This is very fucking bad and no one will see this. Fuck: " + e.Message + "\n and Callstack: " + e.StackTrace);
             }
         }
 
@@ -375,7 +375,7 @@ namespace DiscordBot
                         }
                         catch (Exception e)
                         {
-                            await WriteLine("Couldn't create file: " + fileName + " and error: " + e.Message + " Callstack: " + e.StackTrace);
+                            await WriteLine("Couldn't create file: " + fileName + " and error: " + e.Message + "\nCallstack: " + e.StackTrace);
                         }
                     }
                     try
@@ -425,7 +425,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Coudn't write file in channels.txt with error: " + e.Message + " and callstack" + e.StackTrace);
+                        await WriteLine("Coudn't write file in channels.txt with error: " + e.Message + "\nand callstack" + e.StackTrace);
                     }
                 }
                 int members = 0;
@@ -437,7 +437,7 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await WriteLine("Whole savemembers crashed. This is bad attention now error: " + e.Message + " callstack: " + e.StackTrace);
+                await WriteLine("Whole savemembers crashed. This is bad attention now error: " + e.Message + "\ncallstack: " + e.StackTrace);
             }
         }
 
@@ -889,12 +889,15 @@ namespace DiscordBot
                 List<KeyValuePair<string, Command>> commandnames = Commands.RegisteredCommands.ToList();
                 for (int i = 0; i < commandnames.Count; i++)
                 {
-                    commandNames.Add(commandnames[i].Value);
+                    if (!commandNames.Contains(commandnames[i].Value))
+                    {
+                        commandNames.Add(commandnames[i].Value);
+                    }
                 }
             };
             Client.MessageCreated += async (e, a) =>
             {
-                if (a.Message.Content.StartsWith(configJson.Prefix) && a.Message.Content.Remove(0, 1).Split()[0].Length > 2)
+                if (a.Message.Content.StartsWith(configJson.Prefix)/* && a.Message.Content.Remove(0, 1).Split()[0].Length > 2*/)
                 {
                     Thread t = new Thread(() => CheckSimiliar(e, a));
                     t.Start();
@@ -964,7 +967,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Couldn't save: " + e.Message + ". callstack: " + e.StackTrace + ". This is very bad and requires attention now.");
+                        await WriteLine("Couldn't save: " + e.Message + ".\ncallstack: " + e.StackTrace + ". This is very bad and requires attention now.");
                     }
                 }
             }
@@ -998,6 +1001,7 @@ namespace DiscordBot
             stopwatch.Start();
             string commandstring = a.Message.Content;
             commandstring = commandstring.Remove(0, 1);
+            commandstring = commandstring.Split()[0];
             bool isCommand = false;
             for (int i = 0; i < commandNames.Count; i++)
             {
@@ -1026,27 +1030,30 @@ namespace DiscordBot
                 for (int i = 0; i < commandNames.Count; i++)
                 {
                     string commandName = commandNames[i].Name;
-                    if (commandstring.StartsWith(commandName[0]))
+                    //if (commandstring.StartsWith(commandName[0]))
+                    //{
+                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
                     {
+                        return;
+                    }
+                    //}
+                    for (int b = 0; b < commandNames[i].Aliases.Count; b++)
+                    {
+                        commandName = commandNames[i].Aliases[b];
+                        //if (commandstring.StartsWith(commandName[0]))
+                        //{
                         if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
                         {
                             return;
                         }
-                    }
-                    for (int b = 0; b < commandNames[i].Aliases.Count; b++)
-                    {
-                        commandName = commandNames[i].Aliases[b];
-                        if (commandstring.StartsWith(commandName[0]))
-                        {
-                            if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
-                            {
-                                return;
-                            }
-                        }
+                        //}
                     }
                 }
             }
-            WriteLine("Tog " + AdventureCommands.TimespanToString(stopwatch.Elapsed) + " att iterera alla " + commandNames.Count + " kommandon och hittade ingen");
+            if (!isCommand)
+            {
+                WriteLine("Tog " + (stopwatch.Elapsed.TotalMilliseconds) + " millisekunder att iterera alla " + commandNames.Count + " kommandon och hittade ingen.");
+            }
         }
 
         private bool IsSimiliarEnough(string commandstring, string commandName, DiscordChannel channel)
@@ -1059,7 +1066,7 @@ namespace DiscordBot
             int howSimilar = Compute(toCheck.Replace(" ", ""), commandName);
             if (howSimilar <= 2 && howSimilar >= 1 && !toCheck.Contains(commandName))
             {
-                WriteLine("Did you mean: " + commandName, channel);
+                channel.SendMessageAsync("Did you mean: " + commandName + "?").ConfigureAwait(false);
                 //Console.WriteLine(commandstring + " is " + howSimilar + " similar to " + commands[i].name);
                 return true;
             }
@@ -1264,7 +1271,7 @@ namespace DiscordBot
                         }
                         catch (Exception e)
                         {
-                            await WriteLine("Couldn't save simp point user: " + simpPointSaves[i].userName + " error: " + e.Message + " callstack: " + e.StackTrace);
+                            await WriteLine("Couldn't save simp point user: " + simpPointSaves[i].userName + " error: " + e.Message + "\ncallstack: " + e.StackTrace);
                         }
                     }
                 }
@@ -1272,7 +1279,7 @@ namespace DiscordBot
             }
             catch (Exception e)
             {
-                await WriteLine("Whole savesimppoints crashed: " + e.Message + " callstack: " + e.StackTrace);
+                await WriteLine("Whole savesimppoints crashed: " + e.Message + "\ncallstack: " + e.StackTrace);
             }
         }
 

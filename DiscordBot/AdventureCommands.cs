@@ -325,6 +325,22 @@ namespace DiscordBot
                         //SendString += WriteLine(bot.commandNames[i].Name);
                         string title = WriteLine(bot.commandNames[i].Name);
                         SendString = string.Empty;
+                        if (bot.commandNames[i].Description != null && bot.commandNames[i].Description != string.Empty)
+                        {
+                            SendString += WriteLine(bot.commandNames[i].Description);
+                        }
+                        for (int a = 0; a < bot.commandNames[i].Overloads.Count; a++)
+                        {
+                            string temp = "overload " + (a + 1) + ": ";
+                            for (int b = 0; b < bot.commandNames[i].Overloads[a].Arguments.Count; b++)
+                            {
+                                if (bot.commandNames[i].Overloads[a].Arguments[b].Description != null && bot.commandNames[i].Overloads[a].Arguments[b].Description != string.Empty)
+                                {
+                                    temp += " " + bot.commandNames[i].Overloads[a].Arguments[b].Description + "\n";
+                                }
+                            }
+                            SendString += WriteLine(temp);
+                        }
                         for (int a = 0; a < bot.commandNames[i].Aliases.Count; a++)
                         {
                             SendString += WriteLine("alias " + (a + 1) + ": " + bot.commandNames[i].Aliases[a]);
@@ -1060,21 +1076,28 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.RequireOwner]
         public async Task GetApp(CommandContext ctx)
         {
-            string SendString = string.Empty;
-            foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
+            try
             {
-                IntPtr handle = window.Key;
+                string SendString = string.Empty;
+                foreach (KeyValuePair<IntPtr, string> window in OpenWindowGetter.GetOpenWindows())
+                {
+                    IntPtr handle = window.Key;
 
-                string title = window.Value;
+                    string title = window.Value;
 
-                SendString += WriteLine(title/* + ", (" + handle + ")"*/);
+                    SendString += WriteLine(title/* + ", (" + handle + ")"*/);
+                }
+                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                {
+                    Title = "Applications info",
+                    Description = SendString,
+                });
+                SendString = string.Empty;
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            catch (Exception e)
             {
-                Title = "Applications info",
-                Description = SendString,
-            });
-            SendString = string.Empty;
+                await ctx.RespondAsync(e.Message);
+            }
         }
 
         [DSharpPlus.CommandsNext.Attributes.Command("appsscreenshot")]
