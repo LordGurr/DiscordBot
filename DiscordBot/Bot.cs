@@ -1049,9 +1049,6 @@ namespace DiscordBot
                         //}
                     }
                 }
-            }
-            if (!isCommand)
-            {
                 WriteLine("Tog " + (stopwatch.Elapsed.TotalMilliseconds) + " millisekunder att iterera alla " + commandNames.Count + " kommandon och hittade ingen.");
             }
         }
