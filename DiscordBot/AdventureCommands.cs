@@ -234,11 +234,12 @@ namespace DiscordBot
                                 //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
                             }
                         }
-                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                        {
-                            Title = title,
-                            Description = SendString,
-                        });
+                        //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                        //{
+                        //    Title = title,
+                        //    Description = SendString,
+                        //});
+                        await WriteArrayEmbeed(SendString.Split('\n'), ctx, title);
                     }
                     else
                     {
@@ -291,11 +292,12 @@ namespace DiscordBot
                                 //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
                             }
                         }
-                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                        {
-                            Title = title,
-                            Description = SendString,
-                        });
+                        //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                        //{
+                        //    Title = title,
+                        //    Description = SendString,
+                        //});
+                        await WriteArrayEmbeed(SendString.Split('\n'), ctx, title);
                     }
                 }
                 catch (Exception e)
@@ -346,11 +348,12 @@ namespace DiscordBot
                             SendString += WriteLine("alias " + (a + 1) + ": " + bot.commandNames[i].Aliases[a]);
                             //await WriteLine(kanalerna[i].discordUsers[a].member.Username);
                         }
-                        await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                        {
-                            Title = title,
-                            Description = SendString,
-                        });
+                        //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                        //{
+                        //    Title = title,
+                        //    Description = SendString,
+                        //});
+                        await WriteArrayEmbeed(SendString.Split('\n'), ctx, title);
                     }
                 }
                 catch (Exception e)
@@ -677,11 +680,12 @@ namespace DiscordBot
             }
             else
             {
-                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                {
-                    Title = "Activities",
-                    Description = SendString,
-                });
+                //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                //{
+                //    Title = "Activities",
+                //    Description = SendString,
+                //});
+                await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Activities");
             }
         }
 
@@ -1747,11 +1751,12 @@ namespace DiscordBot
                     SendString += WriteLine("Botcoin: " + temp[a].antalBotCoin + " " + temp[a].userName);
                 }
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-            {
-                Title = "Leaderboard",
-                Description = SendString,
-            });
+            //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            //{
+            //    Title = "Leaderboard",
+            //    Description = SendString,
+            //});
+            await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Leaderboard");
             GiveBotCoin(ctx);
         }
 
@@ -1783,11 +1788,12 @@ namespace DiscordBot
                     SendString += WriteLine("Simppoints: " + temp[a].antalSimpPoint + " " + temp[a].userName);
                 }
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-            {
-                Title = "Leaderboard",
-                Description = SendString,
-            });
+            //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            //{
+            //    Title = "Leaderboard",
+            //    Description = SendString,
+            //});
+            await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Leaderboard");
             GiveBotCoin(ctx);
         }
 
@@ -1817,11 +1823,12 @@ namespace DiscordBot
                     SendString += WriteLine(" ");
                 }
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-            {
-                Title = "Game time leaderboard",
-                Description = SendString,
-            });
+            //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            //{
+            //    Title = "Game time leaderboard",
+            //    Description = SendString,
+            //});
+            await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Game time leaderboard");
             GiveBotCoin(ctx);
         }
 
@@ -1850,11 +1857,12 @@ namespace DiscordBot
 
                     //SendString += WriteLine(" ");
                 }
-                await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                {
-                    Title = "Game time leaderboard",
-                    Description = SendString,
-                });
+                //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                //{
+                //    Title = "Game time leaderboard",
+                //    Description = SendString,
+                //});
+                await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Game time leaderboard");
                 GiveBotCoin(ctx);
             }
             catch (Exception e)
@@ -1868,7 +1876,7 @@ namespace DiscordBot
         [DSharpPlus.CommandsNext.Attributes.Description("Signs you up for botcoin and tells you how many you have.")]
         public async Task GameLeaderboard(CommandContext ctx, [RemainingText] string gamename)
         {
-            if (gamename != null)
+            if (gamename != null && gamename != string.Empty)
             {
                 string SendString = string.Empty;
                 List<(GameTimeSave, string)> tempSave = new List<(GameTimeSave, string)>();
@@ -1893,11 +1901,12 @@ namespace DiscordBot
 
                         //SendString += WriteLine(" ");
                     }
-                    await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-                    {
-                        Title = "Game time leaderboard",
-                        Description = SendString,
-                    });
+                    //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+                    //{
+                    //    Title = "Game time leaderboard",
+                    //    Description = SendString,
+                    //});
+                    await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Game time leaderboard");
                     GiveBotCoin(ctx);
                 }
                 else
@@ -1939,11 +1948,12 @@ namespace DiscordBot
                     SendString += WriteLine(" ");
                 }
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-            {
-                Title = "Game time leaderboard",
-                Description = SendString,
-            });
+            //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            //{
+            //    Title = "Game time leaderboard",
+            //    Description = SendString,
+            //});
+            await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Game time leaderboard");
             GiveBotCoin(ctx);
         }
 
@@ -1976,11 +1986,12 @@ namespace DiscordBot
 
                 //SendString += WriteLine(" ");
             }
-            await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
-            {
-                Title = "Game time leaderboard",
-                Description = SendString,
-            });
+            //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
+            //{
+            //    Title = "Game time leaderboard",
+            //    Description = SendString,
+            //});
+            await WriteArrayEmbeed(SendString.Split('\n'), ctx, "Game time leaderboard");
             GiveBotCoin(ctx);
         }
 
@@ -3389,18 +3400,19 @@ namespace DiscordBot
 
         private static string[] TextAnimation(string input)
         {
+            MyConsole myConsole = new MyConsole();
             for (int i = 0; i < 20; i++)
             {
-                MyConsole.WriteLine(input);
+                myConsole.WriteLine(input);
             }
             int curPos = 0;
             for (int a = 0; a < 2; a++)
             {
                 //Move to the Right
-                Move(ref curPos, 20, input, false);
+                Move(ref curPos, 20, input, false, myConsole);
 
                 //Move to the left
-                Move(ref curPos, 20, input, true);
+                Move(ref curPos, 20, input, true, myConsole);
             }
             char[] characters = input.ToCharArray();
             int maxPos = (int)Math.Round(3.75 * characters.Length - 1, MidpointRounding.ToZero);
@@ -3417,10 +3429,10 @@ namespace DiscordBot
                     int spaces = pos[a] - characters.Length + i - characters.Length * 2;
                     spaces = spaces < a ? a : spaces;
                     spaces = spaces + characters.Length - a - 1 >= maxPos ? maxPos - (characters.Length - a) : spaces;
-                    MyConsole.SetCursorPosition(spaces, MyConsole.CursorTop);
-                    MyConsole.Write(characters[a]);
+                    myConsole.SetCursorPosition(spaces, myConsole.CursorTop);
+                    myConsole.Write(characters[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             // Cha cha to the left
             for (int i = (int)Math.Round(7.5 * characters.Length - 1, MidpointRounding.ToZero); i > -1; i--)
@@ -3436,14 +3448,14 @@ namespace DiscordBot
                     {
                     }
                     spaces = spaces + characters.Length - a - 1 >= maxPos ? maxPos - (characters.Length - a) : spaces;
-                    MyConsole.SetCursorPosition(spaces, MyConsole.CursorTop);
-                    MyConsole.Write(characters[a]);
+                    myConsole.SetCursorPosition(spaces, myConsole.CursorTop);
+                    myConsole.Write(characters[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             // Move to the right
             curPos = 0;
-            Move(ref curPos, 15, input, false);
+            Move(ref curPos, 15, input, false, myConsole);
 
             // Wiggle in the middle
             string[] splitted = SplitTheString(input, 3);
@@ -3468,10 +3480,10 @@ namespace DiscordBot
                     {
                         positions[a]++;
                     }
-                    MyConsole.SetCursorPosition(positions[a], MyConsole.CursorTop);
-                    MyConsole.Write(splitted[a]);
+                    myConsole.SetCursorPosition(positions[a], myConsole.CursorTop);
+                    myConsole.Write(splitted[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             bool movingLeft = false;
             int original = positions[1];
@@ -3488,10 +3500,10 @@ namespace DiscordBot
                 positions[1] += movingLeft ? -1 : 1;
                 for (int a = 0; a < splitted.Length; a++)
                 {
-                    MyConsole.SetCursorPosition(positions[a], MyConsole.CursorTop);
-                    MyConsole.Write(splitted[a]);
+                    myConsole.SetCursorPosition(positions[a], myConsole.CursorTop);
+                    myConsole.Write(splitted[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             for (int i = 0; i < 10; i++)
             {
@@ -3516,15 +3528,15 @@ namespace DiscordBot
                             positions[a]++;
                         }
                     }
-                    MyConsole.SetCursorPosition(positions[a], MyConsole.CursorTop);
-                    MyConsole.Write(splitted[a]);
+                    myConsole.SetCursorPosition(positions[a], myConsole.CursorTop);
+                    myConsole.Write(splitted[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             // Move to the left
-            MyConsole.SetCursorPosition(curPos, MyConsole.CursorTop);
-            MyConsole.WriteLine(input);
-            Move(ref curPos, 15, input, true);
+            myConsole.SetCursorPosition(curPos, myConsole.CursorTop);
+            myConsole.WriteLine(input);
+            Move(ref curPos, 15, input, true, myConsole);
 
             // Offsets!
             string offsetted = input;
@@ -3533,10 +3545,10 @@ namespace DiscordBot
             for (int i = 0; i < timesToRun; i++)
             {
                 offsetted = Offset(offsetted, offset);
-                MyConsole.WriteLine(offsetted);
+                myConsole.WriteLine(offsetted);
             }
             // Move to the right
-            Move(ref curPos, 15, input, false);
+            Move(ref curPos, 15, input, false, myConsole);
             // Twist around
             splitted = SplitTheString(input, 2);
             positions = new int[2];
@@ -3574,10 +3586,10 @@ namespace DiscordBot
                     {
                         positions[a] += movingLeft ? 1 : -1;
                     }
-                    MyConsole.SetCursorPosition(positions[a], MyConsole.CursorTop);
-                    MyConsole.Write(splitted[a]);
+                    myConsole.SetCursorPosition(positions[a], myConsole.CursorTop);
+                    myConsole.Write(splitted[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             for (int i = 0; i < 30; i++)
             {
@@ -3587,29 +3599,29 @@ namespace DiscordBot
                     {
                         positions[a] += positions[a] < originalPos[a] ? 1 : -1;
                     }
-                    MyConsole.SetCursorPosition(positions[a], MyConsole.CursorTop);
-                    MyConsole.Write(splitted[a]);
+                    myConsole.SetCursorPosition(positions[a], myConsole.CursorTop);
+                    myConsole.Write(splitted[a]);
                 }
-                MyConsole.WriteLine();
+                myConsole.WriteLine();
             }
             // Move to the left
-            Move(ref curPos, 15, input, true);
+            Move(ref curPos, 15, input, true, myConsole);
             for (int i = 0; i < 15; i++)
             {
-                MyConsole.WriteLine(input);
+                myConsole.WriteLine(input);
             }
-            return MyConsole.GetStringArray();
+            return myConsole.GetStringArray();
         }
 
-        private static void Move(ref int curPos, int steps, string input, bool left)
+        private static void Move(ref int curPos, int steps, string input, bool left, MyConsole myConsole)
         {
             if (left)
             {
                 for (int i = 0; i < steps; i++)
                 {
                     curPos--;
-                    MyConsole.SetCursorPosition(curPos, MyConsole.CursorTop);
-                    MyConsole.WriteLine(input);
+                    myConsole.SetCursorPosition(curPos, myConsole.CursorTop);
+                    myConsole.WriteLine(input);
                 }
             }
             else
@@ -3617,8 +3629,8 @@ namespace DiscordBot
                 for (int i = 0; i < steps; i++)
                 {
                     curPos++;
-                    MyConsole.SetCursorPosition(curPos, MyConsole.CursorTop);
-                    MyConsole.WriteLine(input);
+                    myConsole.SetCursorPosition(curPos, myConsole.CursorTop);
+                    myConsole.WriteLine(input);
                 }
             }
         }
@@ -3691,12 +3703,18 @@ namespace DiscordBot
                           ) * factor;
         }
 
-        private static class MyConsole
+        private class MyConsole
         {
             private static List<string> everyThing = new List<string>();
             private static int[] position = new int[2];
 
-            public static void WriteLine(string str)
+            public MyConsole()
+            {
+                everyThing = new List<string>();
+                position = new int[2];
+            }
+
+            public void WriteLine(string str)
             {
                 UpdateCursor();
                 if (everyThing[position[1]].Length < str.Length + position[0])
@@ -3713,7 +3731,7 @@ namespace DiscordBot
                 UpdateCursor();
             }
 
-            public static void WriteLine()
+            public void WriteLine()
             {
                 UpdateCursor();
                 position[1]++;
@@ -3721,7 +3739,7 @@ namespace DiscordBot
                 UpdateCursor();
             }
 
-            private static void UpdateCursor()
+            private void UpdateCursor()
             {
                 if (everyThing.Count < 1)
                 {
@@ -3742,7 +3760,7 @@ namespace DiscordBot
                 }
             }
 
-            public static void Write(string str)
+            public void Write(string str)
             {
                 UpdateCursor();
                 if (everyThing.Count < 1)
@@ -3761,7 +3779,7 @@ namespace DiscordBot
                 UpdateCursor();
             }
 
-            public static void Write(char c)
+            public void Write(char c)
             {
                 UpdateCursor();
                 if (everyThing.Count < 1)
@@ -3777,14 +3795,14 @@ namespace DiscordBot
                 UpdateCursor();
             }
 
-            public static void SetCursorPosition(int x, int y)
+            public void SetCursorPosition(int x, int y)
             {
                 position[0] = x;
                 position[1] = y;
                 UpdateCursor();
             }
 
-            private static string ReplaceAt(string input, int index, char newChar)
+            private string ReplaceAt(string input, int index, char newChar)
             {
                 if (input == null)
                 {
@@ -3795,7 +3813,7 @@ namespace DiscordBot
                 return new string(chars);
             }
 
-            public static int CursorTop
+            public int CursorTop
             {
                 get
                 {
@@ -3803,7 +3821,7 @@ namespace DiscordBot
                 }
             }
 
-            public static int CursorLeft
+            public int CursorLeft
             {
                 get
                 {
@@ -3811,7 +3829,7 @@ namespace DiscordBot
                 }
             }
 
-            public static string GetString()
+            public string GetString()
             {
                 string SendString = string.Empty;
                 for (int i = 0; i < everyThing.Count; i++)
@@ -3821,7 +3839,7 @@ namespace DiscordBot
                 return SendString;
             }
 
-            public static string[] GetStringArray()
+            public string[] GetStringArray()
             {
                 return everyThing.ToArray();
             }
