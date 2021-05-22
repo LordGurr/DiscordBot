@@ -44,7 +44,7 @@ namespace DiscordBot
                     }
                     else
                     {
-                        send = tempString;
+                        send = tempString + "\n";
                     }
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
