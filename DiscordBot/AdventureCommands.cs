@@ -49,7 +49,7 @@ namespace DiscordBot
                 }
                 await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
                 {
-                    Title = title + (sent == 0 && latest >= lines.Length ? " part: " + sent : ""),
+                    Title = title + (sent == 0 && latest >= lines.Length ? "" : " part: " + sent),
                     Description = send,
                 });
                 if (latest >= lines.Length)
@@ -785,6 +785,10 @@ namespace DiscordBot
                             for (int i = 0; i < presence.Activities.Count; i++)
                             {
                                 result += presence.Activities[i].ActivityType.ToString() + " " + presence.Activities[i].Name + "\n";
+                                if (presence.Activities[i].RichPresence != null)
+                                {
+                                    result += "Spel: " + presence.Activities[i].RichPresence.Application + " detaljer" + presence.Activities[i].RichPresence.Details;
+                                }
                             }
                             if (result == string.Empty)
                             {
@@ -1985,6 +1989,10 @@ namespace DiscordBot
                 SendString += WriteLine(TimespanToShortString(tempSave[a].Item1.timeSpentPlaying) + " " + tempSave[a].Item1.gameName + " " + tempSave[a].Item2);
 
                 //SendString += WriteLine(" ");
+            }
+            if (SendString == null || SendString == string.Empty)
+            {
+                SendString += "No one is playing anything at the moment.";
             }
             //await ctx.Channel.SendMessageAsync(embed: new DiscordEmbedBuilder
             //{

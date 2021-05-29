@@ -52,7 +52,7 @@ namespace DiscordBot
 
         public const string tempImagePng = "screenshotTemp.png";
 
-        public const int botVersion = 85;
+        public const int botVersion = 86;
 
         public List<RemindmeSave> queuedRemindMes = new List<RemindmeSave>();
 
@@ -476,7 +476,7 @@ namespace DiscordBot
                 }
                 catch (Exception e)
                 {
-                    await WriteLine(e.Message);
+                    await WriteLine("channel: " + tempArray[i] + " errored. " + e.Message);
                 }
             }
         }
@@ -585,8 +585,16 @@ namespace DiscordBot
 
                         for (int a = 0; a < membersGoingToAdd.Count; a++)
                         {
-                            var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(membersGoingToAdd[a]));
-                            allTheMembersToAddToSave.Add(new DiscordMemberSaveData(getMem.Result));
+                            try
+                            {
+                                var getMem = e.Guild.GetMemberAsync(Convert.ToUInt64(membersGoingToAdd[a]));
+                                await getMem;
+                                allTheMembersToAddToSave.Add(new DiscordMemberSaveData(getMem.Result));
+                            }
+                            catch (Exception ex)
+                            {
+                                await WriteLine("Failed to read member: " + membersGoingToAdd[a] + ". Assuming they have been removed. Error: " + ex.Message);
+                            }
                         }
 
                         for (int a = 0; a < channelsInGuild.Count; a++)
@@ -653,7 +661,7 @@ namespace DiscordBot
             List<DiscordChannel> channelsToMessage = new List<DiscordChannel>();
             for (int i = 0; i < kanalerna.Count; i++)
             {
-                if (!guildIds.Any(a => a == kanalerna[i].realDiscordChannel.GuildId) && !kanalerna[i].finished)
+                if (kanalerna[i].realDiscordChannel != null && !guildIds.Any(a => a == kanalerna[i].realDiscordChannel.GuildId) && !kanalerna[i].finished)
                 {
                     guildIds.Add(kanalerna[i].realDiscordChannel.GuildId);
                     channelsToMessage.Add(kanalerna[i].realDiscordChannel);
@@ -884,6 +892,7 @@ namespace DiscordBot
             Client.Ready += async (e, a) =>
             {
                 //await WriteLine("Boten är uppkopplad och redo för kommandon.");
+                await WriteLine("Boten är redo.");
                 Thread t = new Thread(async () => await LoadAllTheChannels());
                 t.Start();
                 List<KeyValuePair<string, Command>> commandnames = Commands.RegisteredCommands.ToList();
