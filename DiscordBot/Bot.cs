@@ -458,10 +458,11 @@ namespace DiscordBot
                 try
                 {
                     string[] members = File.ReadAllLines(tempArray[i]);
-                    kanalerna.Add(new ChannelSaveData(Convert.ToUInt64(tempArray[i].Replace(".txt", ""))));
-                    var g = Client.GetChannelAsync(kanalerna[kanalerna.Count - 1].discordChannel);
-                    kanalerna[kanalerna.Count - 1].realDiscordChannel = g.Result;
-                    kanalerna[kanalerna.Count - 1].membersToAdd = members;
+                    ChannelSaveData temp = new ChannelSaveData(Convert.ToUInt64(tempArray[i].Replace(".txt", "")));
+                    var g = Client.GetChannelAsync(temp.discordChannel);
+                    temp.realDiscordChannel = g.Result;
+                    temp.membersToAdd = members;
+                    kanalerna.Add(temp);
 
                     //for (int a = 0; a < kanalerna[kanalerna.Count - 1].membersToAdd.Length; a++)
                     //{
@@ -557,7 +558,7 @@ namespace DiscordBot
 
         private async Task LoadChannels(MessageCreateEventArgs e)
         {
-            if (!isAdding)
+            if (!isAdding && e.Channel != null)
             {
                 isAdding = true;
                 try
@@ -567,7 +568,7 @@ namespace DiscordBot
                     //ChannelSaveData curChannel = kanalerna[i];
                     List<DiscordChannel> theChannels = e.Guild.Channels.Values.ToList();
                     ulong guildID = e.Guild.Id;
-                    List<ChannelSaveData> channelsInGuild = kanalerna.FindAll(a => a.realDiscordChannel.GuildId == guildID).ToList();
+                    List<ChannelSaveData> channelsInGuild = kanalerna.FindAll(a => a.realDiscordChannel != null && a.realDiscordChannel.GuildId == guildID).ToList();
                     if (!channelsInGuild.All(a => a.finished))
                     {
                         List<string> membersGoingToAdd = new List<string>();
@@ -650,7 +651,7 @@ namespace DiscordBot
                 catch (Exception ex)
                 {
                     isAdding = false;
-                    await WriteLine(ex.Message);
+                    await WriteLine("Adding members failed: " + ex.Message + "Callstack: " + ex.StackTrace);
                 }
             }
         }
@@ -667,6 +668,7 @@ namespace DiscordBot
                     channelsToMessage.Add(kanalerna[i].realDiscordChannel);
                 }
             }
+            await WriteLine("Prepairing to add " + channelsToMessage.Count + " guilds.");
             for (int i = 0; i < channelsToMessage.Count; i++)
             {
                 if (isAdding)
@@ -903,6 +905,7 @@ namespace DiscordBot
                         commandNames.Add(commandnames[i].Value);
                     }
                 }
+                await WriteLine("Read commands without crashing");
             };
             Client.MessageCreated += async (e, a) =>
             {
