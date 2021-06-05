@@ -132,7 +132,7 @@ namespace DiscordBot
         private async Task ReadCheckMemebers()
         {
             var mem = Client.GetUserAsync(376786629135958026);
-            //membersChecking.Add(new MemberToCheck(mem.Result, "Ya boi jens online", "Ya boi jens offline"));
+            //membersChecking.Add(new MemberToCheck(mem.Result, "Ya boi Jens online", "Ya boi Jens offline")); Gustav Juul.
             if (!membersChecking.Any(a => a.discordUser.Id == mem.Result.Id))
                 membersChecking.Add(new MemberToCheck(mem.Result, "https://media.giphy.com/media/NvZ182nKxesLGdFvm8/giphy.gif", "https://media.giphy.com/media/cMAdGn8Zrj80cTZPPV/giphy.gif"));
             mem = Client.GetUserAsync(454590972186198028);
@@ -328,7 +328,7 @@ namespace DiscordBot
             }
             else
             {
-                await ctx.RespondAsync("Windown is not visible").ConfigureAwait(false);
+                await ctx.RespondAsync("Window is not visible").ConfigureAwait(false);
             }
         }
 
@@ -354,7 +354,7 @@ namespace DiscordBot
             }
             else
             {
-                await ctx.Message.RespondAsync("Windown is not visible").ConfigureAwait(false);
+                await ctx.Message.RespondAsync("Window is not visible").ConfigureAwait(false);
             }
         }
 
@@ -425,7 +425,7 @@ namespace DiscordBot
                     }
                     catch (Exception e)
                     {
-                        await WriteLine("Coudn't write file in channels.txt with error: " + e.Message + "\nand callstack" + e.StackTrace);
+                        await WriteLine("Couldn't write file in channels.txt with error: " + e.Message + "\nand callstack" + e.StackTrace);
                     }
                 }
                 int members = 0;
@@ -1021,7 +1021,7 @@ namespace DiscordBot
                 if (commandstring.StartsWith(commandName))
                 {
                     isCommand = true;
-                    break;
+                    return;
                 }
                 for (int b = 0; b < commandNames[i].Aliases.Count; b++)
                 {
@@ -1034,7 +1034,7 @@ namespace DiscordBot
                 }
                 if (isCommand)
                 {
-                    break;
+                    return;
                 }
             }
             if (!isCommand)
@@ -1044,7 +1044,7 @@ namespace DiscordBot
                     string commandName = commandNames[i].Name;
                     //if (commandstring.StartsWith(commandName[0]))
                     //{
-                    if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
+                    if (/*commandstring.Split()[0].Contains(commandName) || */IsSimiliarEnough(commandstring, commandName, a.Channel))
                     {
                         return;
                     }
@@ -1054,7 +1054,7 @@ namespace DiscordBot
                         commandName = commandNames[i].Aliases[b];
                         //if (commandstring.StartsWith(commandName[0]))
                         //{
-                        if (commandstring.Split()[0].Contains(commandName) || IsSimiliarEnough(commandstring, commandName, a.Channel))
+                        if (/*commandstring.Split()[0].Contains(commandName) || */IsSimiliarEnough(commandstring, commandName, a.Channel))
                         {
                             return;
                         }
@@ -1118,7 +1118,7 @@ namespace DiscordBot
             return d[n, m];
         }
 
-        public static bool IsDigitsOnly(string str, string operators) //Den här kollar så att det bara finns nummer eller mellanslag i passwordet. Om inte för denna så skulle spelet krasha om du skrev en bokstav.
+        public static bool IsDigitsOnly(string str, string operators) //Den här kollar så att det bara finns nummer eller mellanslag i passwordet. Om inte för denna så skulle spelet krascha om du skrev en bokstav.
         {
             bool containsNumber = false;
             foreach (char c in str)

@@ -985,7 +985,7 @@ namespace DiscordBot
             }
             else
             {
-                await ctx.RespondAsync("I wont't upload any config files through discord");
+                await ctx.RespondAsync("I won't upload any config files through discord");
             }
         }
 
@@ -1211,7 +1211,7 @@ namespace DiscordBot
                 bot.stopAll = true;
                 //TimeSpan temp = DateTime.Now - lastSave;
                 //await WriteLine("Stänger ner inom " + (sparTid.TotalMinutes - temp.TotalMinutes).ToString("F1") + " minuter.\nKommer inte att starta igen.", e);
-                await CommandWriteLine("Stänger ner omdelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
+                await CommandWriteLine("Stänger ner omedelbart på order av: " + ctx.Member.DisplayName + "(" + ctx.Member.Username + ")", ctx);
                 if (bot.isAdding)
                 {
                     await WriteLine("Väntar på att ladda in medlemmar ", ctx);
@@ -2408,7 +2408,7 @@ namespace DiscordBot
                 }
                 if (!found)
                 {
-                    await ctx.Channel.SendMessageAsync("Du måste vara admin för att använda detta kommand.").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Du måste vara admin för att använda detta kommando.").ConfigureAwait(false);
                     return;
                 }
             }
@@ -2547,7 +2547,7 @@ namespace DiscordBot
                 }
                 if (!found)
                 {
-                    await ctx.Channel.SendMessageAsync("Du måste vara admin för att använda detta kommand.").ConfigureAwait(false);
+                    await ctx.Channel.SendMessageAsync("Du måste vara admin för att använda detta kommando.").ConfigureAwait(false);
                     return;
                 }
             }
@@ -3012,7 +3012,7 @@ namespace DiscordBot
 
         [DSharpPlus.CommandsNext.Attributes.Command("adventure")]
         [DSharpPlus.CommandsNext.Attributes.Description("Let's you play a simple minigame.")]
-        public async Task Adven(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Input which direction you wan't to move in. up, down, left, right. Example: ?adventure right")]string direction)
+        public async Task Adven(CommandContext ctx, [DSharpPlus.CommandsNext.Attributes.Description("Input which direction you want to move in. up, down, left, right. Example: ?adventure right")]string direction)
         {
             int playerIndex = -1;
             for (int i = 0; i < saveData.Count; i++)
